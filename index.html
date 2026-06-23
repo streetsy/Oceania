@@ -92,16 +92,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 const {useState,useEffect,useRef,useCallback,useMemo}=React;
 const h=React.createElement;
 
-// ── UTILS ──────────────────────────────────────────────────────────────────
 function uid(){return Math.random().toString(36).slice(2,9);}
-function genCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 function fmtDate(s){if(!s)return'';try{return new Date(s+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});}catch{return s;}}
 function todayStr(){return new Date().toISOString().slice(0,10);}
 function currencySymbol(c){return{EUR:'€',GBP:'£',USD:'$',CHF:'CHF '}[c]||c+' ';}
 
-// ── PRE-FILLED DATA ─────────────────────────────────────────────────────────
 const META0={ship:'Oceania Allura',voyage:'Mediterranean Cruise 2026',startDate:'2026-06-25',cabin:'',deck:''};
 const EMERGENCY0={cabinNumber:'',insuranceProvider:'',insurancePolicyNumber:'',insurancePhone:'',contact1Name:'',contact1Phone:'',contact1Relation:'',contact2Name:'',contact2Phone:'',contact2Relation:'',oceaniaGuestServices:'',notes:''};
 const ITIN0=[
@@ -119,9 +116,7 @@ const ITIN0=[
 {day:12,date:'2026-07-06',port:'Rovinj',country:'Croatia',arrival:'11:00 AM',departure:'8:00 PM',isSeaDay:false,portNotes:'TENDER PORT if anchored — confirm on previous evening\'s programme. Late 8:00 PM departure — relaxed afternoon and evening.\n\n⚠️ PORT NOTE: Some published itineraries list Pula for this day instead of Rovinj. Verify with the ship\'s daily programme the evening before.',excursions:[],dining:[],places:[{id:'p12a',name:'Rovinj Old Town Peninsula',category:'Must see',description:'One of the most beautiful towns on the Adriatic — Venetian-style buildings on a compact peninsula, colourful harbour, cobbled lanes. Very photogenic especially towards sunset.',tips:'Entire old town is walkable. Climb to St Euphemia for best views. Allow 2–3 hours.'},{id:'p12b',name:'Church of St Euphemia',category:'Cultural',description:'18th-century baroque church crowning the old town. Bell tower gives best panoramic views of Rovinj and surrounding islands.',tips:'Climbing the bell tower is worth it for the harbour views.'},{id:'p12c',name:'Grisia Street',category:'Shopping',description:'Rovinj\'s art street — local artists display and sell original work along cobbled steps to St Euphemia.',tips:'Good for original artwork as a cruise souvenir. Browse before committing.'},{id:'p12d',name:'Golden Cape Forest Park',category:'Nature',description:'Coastal park with forest, rocky shoreline and clear water, 10 min walk south of old town.',tips:'Free entry. Bring swimwear — excellent clear water for a swim on a warm afternoon.'}],notes:'Last full port day. Late 8:00 PM departure — no rush. Lovely evening light in the old town.'},
 {day:13,date:'2026-07-07',port:'Trieste',country:'Italy',arrival:'8:00 AM',departure:'',isSeaDay:false,portNotes:'Disembarkation day. Ship arrives 8:00 AM. Taxi or train to airport. Optional extra night in Trieste.',excursions:[],dining:[],places:[{id:'p13a',name:'Piazza Unità d\'Italia',category:'Must see',description:'One of the largest seaside squares in Europe — grand Austro-Hungarian architecture opening onto the Gulf of Trieste.',tips:'Worth a walk if disembarking later or staying an extra night.'},{id:'p13b',name:'Trieste Coffee Culture',category:'Food & drink',description:'One of Italy\'s strongest café cultures, shaped by its Austro-Hungarian past.',tips:'Try a "capo in b" — espresso with a little milk in a glass, the local style.'}],notes:'Put luggage outside cabin night before (check Oceania instructions for time). Note disembarkation group number and meeting time.'}
 ];
-const DEFAULT_DATA={meta:META0,itin:ITIN0,cruiseNotes:'',expenses:[],emergency:EMERGENCY0};
 
-// ── SHARED UI ───────────────────────────────────────────────────────────────
 function Fld({label,children}){return h('div',{className:'fld'},[h('label',{key:'l',className:'lbl'},label),children]);}
 function Inp({label,value,onChange,placeholder,type='text',rows,autoComplete}){
   const el=rows?h('textarea',{value:value||'',onChange:e=>onChange(e.target.value),placeholder,rows}):h('input',{type,value:value||'',onChange:e=>onChange(e.target.value),placeholder,autoComplete:autoComplete||'off'});
@@ -165,7 +160,6 @@ function statusTag(s){
   return h('span',{className:'tag '+(map[s]||'tag-gray')},s);
 }
 
-// ── FORM MODALS ─────────────────────────────────────────────────────────────
 function MetaModal({meta,onSave,onClose}){
   const [f,setF]=useState({...meta});
   const u=k=>v=>setF(p=>({...p,[k]:v}));
@@ -227,7 +221,7 @@ function PlModal({init,onSave,onClose}){
     h(Inp,{key:'t',label:'Tips',value:f.tips,onChange:u('tips')})
   ]);
 }
-function ExpenseModal({init,dayOptions,onSave,onClose}){
+function ExpenseModal({init,onSave,onClose}){
   const [f,setF]=useState({date:todayStr(),port:'',description:'',amount:'',currency:'EUR',...(init||{})});
   const u=k=>v=>setF(p=>({...p,[k]:v}));
   return h(Modal,{title:init&&init.id?'Edit expense':'Add expense',onClose,onSave:()=>onSave({...f,amount:parseFloat(f.amount)||0})},[
@@ -259,7 +253,6 @@ function EmergencyModal({emergency,onSave,onClose}){
   ]);
 }
 
-// ── TODAY SCREEN ─────────────────────────────────────────────────────────────
 function TodayScreen({data,onGoToDay}){
   const today=todayStr();
   const day=data.itin.find(d=>d.date===today);
@@ -272,8 +265,8 @@ function TodayScreen({data,onGoToDay}){
       h('div',{key:'cd',className:'countdown-card'},[
         h('div',{style:{fontSize:48,marginBottom:8}},'⚓'),
         h('div',{style:{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,marginBottom:6}},data.meta.voyage||'Your Cruise'),
-h('div',{style:{fontSize:15,opacity:0.75,marginBottom:16}},data.meta.ship||''),
-h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
+        h('div',{style:{fontSize:15,opacity:0.75,marginBottom:16}},data.meta.ship||''),
+        h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
         h('div',{style:{fontSize:14,opacity:0.8}},'days until departure')
       ]),
       h('div',{key:'sc',className:'card'},[
@@ -302,7 +295,6 @@ h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
 
   const topPlaces=day.places.slice(0,3);
   return h('div',{className:'main-content'},[
-    // Day header
     h('div',{key:'dh',style:{marginBottom:18}},[
       h('div',{style:{fontSize:11,fontWeight:700,color:'#B8893A',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:4}},'Today · Day '+day.day),
       h('div',{style:{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'#0C2340',lineHeight:1.2}},
@@ -312,7 +304,6 @@ h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
       )
     ]),
 
-    // Times & tender
     !day.isSeaDay&&h('div',{key:'times',className:'card',style:{marginBottom:10}},[
       h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
         [h('div',{key:'ar'},[h('div',{className:'lbl'},'Arrives'),h('div',{style:{fontWeight:700,color:'#0C2340'}},day.arrival||'—')]),
@@ -321,7 +312,6 @@ h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
       day.portNotes&&day.portNotes.includes('TENDER')&&h('div',{key:'t',style:{marginTop:10}},h('span',{className:'tag tag-purple'},'⚓ Tender port'))
     ]),
 
-    // Excursions
     day.excursions.length>0&&h('div',{key:'ex',className:'today-section'},[
       h('div',{className:'today-section-title'},'Excursions'),
       ...day.excursions.map(e=>h('div',{key:e.id,className:'today-row'},[
@@ -330,7 +320,6 @@ h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
       ]))
     ]),
 
-    // Dining
     day.dining.length>0&&h('div',{key:'di',className:'today-section'},[
       h('div',{className:'today-section-title'},'Dining tonight'),
       ...day.dining.map(r=>h('div',{key:r.id,className:'today-row'},[
@@ -339,7 +328,6 @@ h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
       ]))
     ]),
 
-    // Top places
     topPlaces.length>0&&h('div',{key:'pl',className:'today-section'},[
       h('div',{className:'today-section-title'},'Top picks for today'),
       ...topPlaces.map(p=>h('div',{key:p.id,className:'today-row'},[
@@ -348,47 +336,61 @@ h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
       ]))
     ]),
 
-    // Notes
     day.notes&&h('div',{key:'nt',className:'today-section'},[
       h('div',{className:'today-section-title'},'My notes'),
       h('div',{className:'today-row'},day.notes)
     ]),
 
-    // Link to full day
     h('button',{key:'link',className:'btn btn-ghost btn-full',style:{marginTop:4},onClick:()=>onGoToDay(day.day)},'View full Day '+day.day+' details →')
   ]);
 }
 
-// ── DAYS SCREEN ──────────────────────────────────────────────────────────────
-function DaysScreen({data,save}){
+function DaysScreen({data,saveShared,savePrivate}){
   const [sel,setSel]=useState(1);
   const [tab,setTab]=useState('port');
   const [modal,setModal]=useState(null);
   const day=data.itin.find(d=>d.day===sel)||data.itin[0];
 
-  function saveDay(n,u){
+  function saveDayPort(n,u){
     const it=data.itin.map(d=>d.day===n?{...d,...u}:d);
-    save({...data,itin:it});
+    saveShared({itin:it});
   }
-  function addItem(f,item){const d=data.itin.find(d=>d.day===sel);const arr=[...d[f],{...item,id:uid()}];saveDay(sel,{[f]:arr});}
-  function updItem(f,id,u){const d=data.itin.find(d=>d.day===sel);const arr=d[f].map(i=>i.id===id?{...i,...u}:i);saveDay(sel,{[f]:arr});}
-  function delItem(f,id){const d=data.itin.find(d=>d.day===sel);const arr=d[f].filter(i=>i.id!==id);saveDay(sel,{[f]:arr});}
+
+  function addPrivateItem(f,item){
+    const currentList = data.privateDayData[sel]?.[f] || [];
+    const arr=[...currentList,{...item,id:uid()}];
+    savePrivate({[`day_${sel}.${f}`]:arr});
+  }
+  function updPrivateItem(f,id,u){
+    const currentList = data.privateDayData[sel]?.[f] || [];
+    const arr=currentList.map(i=>i.id===id?{...i,...u}:i);
+    savePrivate({[`day_${sel}.${f}`]:arr});
+  }
+  function delPrivateItem(f,id){
+    const currentList = data.privateDayData[sel]?.[f] || [];
+    const arr=currentList.filter(i=>i.id!==id);
+    savePrivate({[`day_${sel}.${f}`]:arr});
+  }
+
+  const excursions = data.privateDayData[sel]?.excursions || [];
+  const dining = data.privateDayData[sel]?.dining || [];
+  const places = data.privateDayData[sel]?.places || [];
+  const notes = data.privateDayData[sel]?.notes || '';
 
   const tabs=[
     {id:'port',label:'Port'},
-    {id:'excursions',label:'Excursions'+(day.excursions.length?' ('+day.excursions.length+')':'')},
-    {id:'dining',label:'Dining'+(day.dining.length?' ('+day.dining.length+')':'')},
+    {id:'excursions',label:'Excursions'+(excursions.length?' ('+excursions.length+')':'')},
+    {id:'dining',label:'Dining'+(dining.length?' ('+dining.length+')':'')},
     {id:'places',label:'Explorer'},
     {id:'notes',label:'Notes'}
   ];
 
   return h('div',{},[
-    // Day track
     h('div',{key:'track',style:{background:'#0E2949',overflowX:'auto',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}},
       h('div',{style:{padding:'11px 16px 13px',display:'flex',alignItems:'center',minWidth:'max-content',gap:0,maxWidth:900,margin:'0 auto'}},
         data.itin.map((d,i)=>{
           const active=d.day===sel;
-          const hasData=d.excursions.length+d.dining.length+d.places.length>0;
+          const hasData=(data.privateDayData[d.day]?.excursions?.length || 0) + (data.privateDayData[d.day]?.dining?.length || 0) + (data.privateDayData[d.day]?.places?.length || 0) > 0;
           return h('div',{key:d.day,style:{display:'flex',alignItems:'center'}},[
             h('div',{onClick:()=>{setSel(d.day);setTab('port');},style:{cursor:'pointer',textAlign:'center',width:48}},[
               h('div',{key:'c',style:{width:34,height:34,borderRadius:'50%',margin:'0 auto 3px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,transition:'all 0.2s',background:active?'#C9A45A':hasData?'rgba(201,164,90,0.22)':'rgba(255,255,255,0.07)',border:active?'2px solid #C9A45A':'2px solid rgba(255,255,255,0.15)',color:active?'#0C2340':'#fff'}},d.day),
@@ -400,9 +402,7 @@ function DaysScreen({data,save}){
       )
     ),
 
-    // Content
     h('div',{key:'main',className:'main-content'},[
-      // Day header
       h('div',{key:'dh',style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,gap:8}},[
         h('div',{key:'dl'},[
           h('div',{style:{fontFamily:'Georgia,serif',fontSize:18,fontWeight:700,color:'#0C2340',lineHeight:1.25}},
@@ -410,18 +410,15 @@ function DaysScreen({data,save}){
           h('div',{style:{fontSize:12,color:'#6B8099',marginTop:3}},
             [day.date&&fmtDate(day.date),day.arrival&&'Arrives '+day.arrival,day.departure&&'Departs '+day.departure].filter(Boolean).join(' · '))
         ]),
-        h('button',{key:'ep',className:'btn btn-ghost btn-sm',onClick:()=>setModal({t:'port'})},'✎ Edit')
+        h('button',{key:'ep',className:'btn btn-ghost btn-sm',onClick:()=>setModal({t:'port'})},'✎ Edit Port')
       ]),
 
-      // Warn box for Day 12
       day.portNotes&&day.portNotes.includes('⚠️')&&h('div',{key:'warn',className:'warn-box'},
         day.portNotes.split('\n').filter(l=>l.startsWith('⚠️')).join('\n')
       ),
 
-      // Tabs
       h('div',{key:'tabs',className:'tab-bar'},tabs.map(t=>h('button',{key:t.id,className:'tab-btn'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},t.label))),
 
-      // Port tab
       tab==='port'&&h('div',{key:'pt'},
         day.isSeaDay
           ?h('div',{className:'card',style:{textAlign:'center',padding:28}},[h('div',{style:{fontSize:36,marginBottom:8}},'🌊'),h('div',{style:{fontFamily:'Georgia,serif',fontSize:17,color:'#0C2340',fontWeight:700}},'Day at sea'),h('div',{style:{color:'#6B8099',fontSize:13,marginTop:4}},'Relax and enjoy the ship.')])
@@ -438,11 +435,10 @@ function DaysScreen({data,save}){
             ])
       ),
 
-      // Excursions
       tab==='excursions'&&h('div',{key:'ext'},
-        day.excursions.length===0
+        excursions.length===0
           ?h(Empty,{icon:'🗺',text:'No excursions added for this day.',onAdd:()=>setModal({t:'ex'}),addLabel:'+ Add excursion'})
-          :[...day.excursions.map(ex=>h(ICard,{key:ex.id,onEdit:()=>setModal({t:'ex',d:ex}),onDelete:()=>delItem('excursions',ex.id)},
+          :[...excursions.map(ex=>h(ICard,{key:ex.id,onEdit:()=>setModal({t:'ex',d:ex}),onDelete:()=>delPrivateItem('excursions',ex.id)},
               [h('div',{key:'hd',className:'item-hd'},[h('div',{key:'n',className:'item-name'},ex.name),ex.status&&statusTag(ex.status)]),
                h('div',{key:'m',className:'item-meta'},[ex.time&&h('span',{key:'t'},'🕐 '+ex.time),ex.duration&&h('span',{key:'d'},'⏱ '+ex.duration),ex.price&&h('span',{key:'p'},'💰 '+ex.price),ex.operator&&h('span',{key:'o'},'🏢 '+ex.operator)]),
                ex.notes&&h('div',{key:'nt',className:'item-note'},ex.notes)]
@@ -450,11 +446,10 @@ function DaysScreen({data,save}){
            h('button',{key:'add',className:'btn btn-navy btn-full',style:{marginTop:4},onClick:()=>setModal({t:'ex'})},'+ Add another excursion')]
       ),
 
-      // Dining
       tab==='dining'&&h('div',{key:'dit'},
-        day.dining.length===0
+        dining.length===0
           ?h(Empty,{icon:'🍽',text:'No dining reservations for this day.',onAdd:()=>setModal({t:'di'}),addLabel:'+ Add reservation'})
-          :[...day.dining.map(r=>h(ICard,{key:r.id,onEdit:()=>setModal({t:'di',d:r}),onDelete:()=>delItem('dining',r.id)},
+          :[...dining.map(r=>h(ICard,{key:r.id,onEdit:()=>setModal({t:'di',d:r}),onDelete:()=>delPrivateItem('dining',r.id)},
               [h('div',{key:'hd',className:'item-hd'},[h('div',{key:'n',className:'item-name'},r.restaurant),r.type&&h('span',{key:'tp',className:'tag tag-gold'},r.type)]),
                h('div',{key:'m',className:'item-meta'},[r.time&&h('span',{key:'t'},'🕐 '+r.time),r.guests&&h('span',{key:'g'},'👥 '+r.guests+' guests'),r.confirmation&&h('span',{key:'c'},'🔖 '+r.confirmation)]),
                r.notes&&h('div',{key:'nt',className:'item-note'},r.notes)]
@@ -462,52 +457,46 @@ function DaysScreen({data,save}){
            h('button',{key:'add',className:'btn btn-navy btn-full',style:{marginTop:4},onClick:()=>setModal({t:'di'})},'+ Add another reservation')]
       ),
 
-      // Places
       tab==='places'&&h('div',{key:'plt'},
-        day.places.length===0
+        places.length===0
           ?h(Empty,{icon:'🧭',text:'No places to explore added yet.',onAdd:()=>setModal({t:'pl'}),addLabel:'+ Add a place'})
-          :[...day.places.map(p=>h(ICard,{key:p.id,onEdit:()=>setModal({t:'pl',d:p}),onDelete:()=>delItem('places',p.id)},
+          :[...places.map(p=>h(ICard,{key:p.id,onEdit:()=>setModal({t:'pl',d:p}),onDelete:()=>delPrivateItem('places',p.id)},
               [h('div',{key:'hd',className:'item-hd'},[h('div',{key:'n',className:'item-name'},p.name),p.category&&h('span',{key:'c',className:'tag tag-teal'},p.category)]),
-               p.description&&h('div',{key:'d',style:{fontSize:13,color:'#374151',marginTop:4,lineHeight:1.5}},p.description),
-               p.tips&&h('div',{key:'t',style:{fontSize:12,color:'#6B8099',fontStyle:'italic',borderTop:'1px solid #EEF3F8',paddingTop:7,marginTop:7}},'💡 '+p.tips)]
+               p.description&&h('div',{style:{fontSize:13,color:'#374151',marginTop:4,lineHeight:1.5}},p.description),
+               p.tips&&h('div',{style:{fontSize:12,color:'#6B8099',fontStyle:'italic',borderTop:'1px solid #EEF3F8',paddingTop:7,marginTop:7}},'💡 '+p.tips)]
             )),
            h('button',{key:'add',className:'btn btn-navy btn-full',style:{marginTop:4},onClick:()=>setModal({t:'pl'})},'+ Add another place')]
       ),
 
-      // Notes
       tab==='notes'&&h('div',{key:'not',className:'card'},[
         h('label',{key:'l',className:'lbl'},'Day notes'),
-        h('textarea',{key:'ta',value:day.notes||'',rows:12,onChange:e=>saveDay(sel,{notes:e.target.value}),placeholder:'Jot down reminders, tips, what to pack…'})
+        h('textarea',{key:'ta',value:notes,rows:12,onChange:e=>savePrivate({[`day_${sel}.notes`]:e.target.value}),placeholder:'Jot down reminders, tips, what to pack…'})
       ])
     ]),
 
-    // Modals
-    modal?.t==='port'&&h(PortModal,{key:'pm',day,onSave:u=>{saveDay(sel,u);setModal(null);},onClose:()=>setModal(null)}),
-    modal?.t==='ex'&&h(ExModal,{key:'em',init:modal.d,onSave:u=>{modal.d?updItem('excursions',modal.d.id,u):addItem('excursions',u);setModal(null);},onClose:()=>setModal(null)}),
-    modal?.t==='di'&&h(DiModal,{key:'dm',init:modal.d,onSave:u=>{modal.d?updItem('dining',modal.d.id,u):addItem('dining',u);setModal(null);},onClose:()=>setModal(null)}),
-    modal?.t==='pl'&&h(PlModal,{key:'plm',init:modal.d,onSave:u=>{modal.d?updItem('places',modal.d.id,u):addItem('places',u);setModal(null);},onClose:()=>setModal(null)})
+    modal?.t==='port'&&h(PortModal,{key:'pm',day,onSave:u=>{saveDayPort(sel,u);setModal(null);},onClose:()=>setModal(null)}),
+    modal?.t==='ex'&&h(ExModal,{key:'em',init:modal.d,onSave:u=>{modal.d?updPrivateItem('excursions',modal.d.id,u):addPrivateItem('excursions',u);setModal(null);},onClose:()=>setModal(null)}),
+    modal?.t==='di'&&h(DiModal,{key:'dm',init:modal.d,onSave:u=>{modal.d?updPrivateItem('dining',modal.d.id,u):addPrivateItem('dining',u);setModal(null);},onClose:()=>setModal(null)}),
+    modal?.t==='pl'&&h(PlModal,{key:'plm',init:modal.d,onSave:u=>{modal.d?updPrivateItem('places',modal.d.id,u):addPrivateItem('places',u);setModal(null);},onClose:()=>setModal(null)})
   ]);
 }
 
-// ── NOTES SCREEN ─────────────────────────────────────────────────────────────
-function NotesScreen({data,save}){
+function NotesScreen({data,savePrivate}){
   return h('div',{className:'main-content'},[
     h('div',{key:'t',className:'screen-title'},'📝 Cruise Notes'),
-    h('div',{key:'hint',className:'info-box'},'Notes that apply to the whole cruise — cabin steward name, people you meet, wines to remember, future cruise offers, ship tips…'),
-    h('textarea',{key:'ta',value:data.cruiseNotes||'',rows:20,onChange:e=>save({...data,cruiseNotes:e.target.value}),placeholder:'Add anything cruise-wide here…',style:{fontSize:14,lineHeight:1.6}})
+    h('div',{key:'hint',className:'info-box'},'Notes that apply to your planner profile — cabin steward name, wines to remember, future cruise offers, ship tips…'),
+    h('textarea',{key:'ta',value:data.cruiseNotes||'',rows:20,onChange:e=>savePrivate({cruiseNotes:e.target.value}),placeholder:'Add anything cruise-wide here…',style:{fontSize:14,lineHeight:1.6}})
   ]);
 }
 
-// ── EXPENSES SCREEN ───────────────────────────────────────────────────────────
-function ExpensesScreen({data,save}){
+function ExpensesScreen({data,savePrivate}){
   const [modal,setModal]=useState(null);
   const expenses=data.expenses||[];
 
-  function addEx(item){save({...data,expenses:[...expenses,{...item,id:uid()}]});}
-  function updEx(id,u){save({...data,expenses:expenses.map(e=>e.id===id?{...e,...u}:e)});}
-  function delEx(id){save({...data,expenses:expenses.filter(e=>e.id!==id)});}
+  function addEx(item){savePrivate({expenses:[...expenses,{...item,id:uid()}]});}
+  function updEx(id,u){savePrivate({expenses:expenses.map(e=>e.id===id?{...e,...u}:e)});}
+  function delEx(id){savePrivate({expenses:expenses.filter(e=>e.id!==id)});}
 
-  // Totals by currency
   const totals=expenses.reduce((acc,e)=>{acc[e.currency]=(acc[e.currency]||0)+e.amount;return acc;},{});
 
   return h('div',{className:'main-content'},[
@@ -539,7 +528,7 @@ function ExpensesScreen({data,save}){
 }
 
 // ── EMERGENCY SCREEN ──────────────────────────────────────────────────────────
-function EmergencyScreen({data,save}){
+function EmergencyScreen({data,savePrivate}){
   const [modal,setModal]=useState(false);
   const e=data.emergency||EMERGENCY0;
   function row(label,value){
@@ -572,185 +561,146 @@ function EmergencyScreen({data,save}){
       !e.contact1Name&&!e.contact2Name&&h('div',{className:'emg-empty'},'No contacts set — tap Edit to add')
     ]),
     e.notes&&h('div',{key:'nt',className:'card'},[h('div',{className:'lbl'},'Notes'),h('div',{style:{fontSize:13,color:'#374151',lineHeight:1.6,whiteSpace:'pre-line'}},e.notes)]),
-    modal&&h(EmergencyModal,{key:'em',emergency:e,onSave:u=>{save({...data,emergency:u});setModal(false);},onClose:()=>setModal(false)})
+    modal&&h(EmergencyModal,{key:'em',emergency:e,onSave:u=>{savePrivate({emergency:u});setModal(false);},onClose:()=>setModal(false)})
   ]);
 }
 
-// ── SETTINGS SCREEN ───────────────────────────────────────────────────────────
-function SettingsScreen({data,save,cruiseCode,onEditMeta}){
+function SettingsScreen({data,saveShared,cruiseCode}){
   const [copied,setCopied]=useState(false);
-  const [importing,setImporting]=useState(false);
-  const fileRef=useRef(null);
 
-  function exportData(){
-    const json=JSON.stringify(data,null,2);
-    const blob=new Blob([json],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download='cruise-backup-'+todayStr()+'.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-  function handleImport(e){
-    const file=e.target.files[0];
-    if(!file)return;
-    setImporting(true);
-    const r=new FileReader();
-    r.onload=ev=>{
-      try{
-        const d=JSON.parse(ev.target.result);
-        if(d.itin&&d.meta){save(d);alert('Backup restored successfully.');}
-        else alert('This does not look like a valid cruise backup file.');
-      }catch{alert('Could not read the file.');}
-      setImporting(false);
-    };
-    r.readAsText(file);
-  }
   function copyCode(){
     navigator.clipboard.writeText(cruiseCode).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);});
+  }
+
+  function disconnect() {
+    lsSet('cruiseCode', null);
+    location.reload();
   }
 
   return h('div',{className:'main-content'},[
     h('div',{key:'t',className:'screen-title'},'⚙️ Settings'),
 
-    // Cruise code
     h('div',{key:'code',className:'card'},[
-      h('div',{className:'lbl'},'Your cruise code'),
+      h('div',{className:'lbl'},'Your active profile code'),
       h('div',{className:'code-box'},cruiseCode),
-      h('div',{style:{fontSize:12,color:'#6B8099',lineHeight:1.5,marginBottom:12}},'Share this code with anyone who needs access to the planner. They open the app, choose "Join existing", and enter this code.'),
-      h('button',{className:'btn btn-gold btn-full',onClick:copyCode},copied?'✓ Copied!':'Copy cruise code')
+      h('div',{style:{fontSize:12,color:'#6B8099',lineHeight:1.5,marginBottom:12}},'This profile connects to the shared timeline itinerary, but keeps dining/notes/expenses separate.'),
+      h('button',{className:'btn btn-gold btn-full',style:{marginBottom:8},onClick:copyCode},copied?'✓ Copied!':'Copy active profile code'),
+      h('button',{className:'btn btn-danger btn-full',onClick:disconnect},'Disconnect Profile')
     ]),
 
-    // Cruise details
     h('div',{key:'meta',className:'card'},[
-      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},[
-        h('div',{className:'lbl',style:{marginBottom:0}},'Cruise details'),
-        h('button',{className:'btn btn-ghost btn-sm',onClick:onEditMeta},'✎ Edit')
-      ]),
       h('div',{style:{fontSize:13,color:'#374151',lineHeight:1.8}},
-        [data.meta.voyage,data.meta.ship,data.meta.startDate&&'Departs '+fmtDate(data.meta.startDate),(data.meta.cabin?'Cabin '+data.meta.cabin:''),(data.meta.deck?'Deck '+data.meta.deck:'')].filter(Boolean).join(' · ')
+        [data.meta.voyage, data.meta.ship, data.meta.startDate && 'Departs '+fmtDate(data.meta.startDate)].filter(Boolean).join(' · ')
       )
-    ]),
-
-    // Export / Import
-    h('div',{key:'backup',className:'card'},[
-      h('div',{className:'lbl'},'Backup & restore'),
-      h('div',{style:{fontSize:12,color:'#6B8099',marginBottom:12,lineHeight:1.5}},'Export saves everything — itinerary, notes, expenses, emergency info — to a JSON file on your device.'),
-      h('button',{className:'btn btn-teal btn-full',style:{marginBottom:8},onClick:exportData},'⬇ Export planner backup'),
-      h('button',{className:'btn btn-ghost btn-full',style:{marginBottom:0},onClick:()=>fileRef.current.click()},importing?'Importing…':'⬆ Import planner backup'),
-      h('input',{key:'fi',type:'file',accept:'.json',ref:fileRef,style:{display:'none'},onChange:handleImport})
     ])
   ]);
 }
 
-// ── SETUP SCREEN ──────────────────────────────────────────────────────────────
+// ── NEW LOG-IN SCREEN ────────────────────────────────────────────────────────
 function SetupScreen({onSetup}){
-  const [step,setStep]=useState('choice'); // choice | new | join
-  const [configStr,setConfigStr]=useState('');
-  const [cruiseCode,setCruiseCode]=useState(genCode());
   const [joinCode,setJoinCode]=useState('');
-  const [err,setErr]=useState('');
-  const [busy,setBusy]=useState(false);
 
-  async function connect(code){
-    setErr('');setBusy(true);
-    try{
-      const cfg=JSON.parse(configStr.trim());
-      if(!cfg.apiKey||!cfg.projectId)throw new Error('Config missing apiKey or projectId');
-      await onSetup(cfg,code.toUpperCase().trim());
-    }catch(e){setErr(e.message||'Invalid config — paste the full Firebase config object.');}
-    setBusy(false);
+  function handleSubmit(e){
+    e.preventDefault();
+    if(joinCode.trim()){
+      onSetup(joinCode.toUpperCase().trim());
+    }
   }
 
   return h('div',{style:{minHeight:'100vh',background:'#0C2340',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px 16px'}},[
     h('div',{key:'logo',style:{fontSize:40,marginBottom:8}},'⚓'),
     h('div',{key:'title',style:{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'#C9A45A',marginBottom:4}},'Cruise Planner'),
-    h('div',{key:'sub',style:{fontSize:13,color:'rgba(255,255,255,0.5)',marginBottom:28}},'Mediterranean 2026'),
+    h('div',{key:'sub',style:{fontSize:13,color:'rgba(255,255,255,0.5)',marginBottom:28}},'Enter your shared trip setup code below'),
 
-    step==='choice'&&h('div',{key:'ch',className:'setup-card'},[
-      h('div',{style:{fontSize:14,color:'#374151',lineHeight:1.6,marginBottom:20}},'First, create a free Firebase project for sync — it takes about 5 minutes and needs no credit card.',
-        h('br'),
-        h('a',{href:'https://console.firebase.google.com',target:'_blank',rel:'noopener',style:{color:'#0C2340',fontWeight:700}},' Open Firebase Console →')
+    h('form',{onSubmit:handleSubmit,className:'setup-card',style:{width:'100%'}},[
+      h('div',{className:'fld'},[
+        h('label',{className:'lbl'},'Enter Cruise Code / Profile ID'),
+        h('input',{value:joinCode,onChange:e=>setJoinCode(e.target.value),placeholder:'e.g. MED2026-A',style:{fontSize:20,fontWeight:700,letterSpacing:'0.1em',textAlign:'center'},autoFocus:true})
+      ]),
+      h('div',{style:{fontSize:12,color:'#6B8099',lineHeight:1.5,marginBottom:16}},
+        'Use a shared master trip identifier prefix combined with your couple letter designation (e.g. MED2026-A or MED2026-B) to coordinate together.'
       ),
-      h('div',{className:'info-box',style:{marginBottom:16}},[
-        h('strong',{},'Setup steps:'),
-        h('ol',{style:{marginLeft:16,marginTop:6,lineHeight:2}},[
-          h('li',{},'Create a project (any name)'),
-          h('li',{},'Click "Firestore Database" → Create → Start in test mode'),
-          h('li',{},'Click ⚙️ Project settings → Your apps → Add app (Web)'),
-          h('li',{},'Copy the firebaseConfig object'),
-          h('li',{},'Paste it below')
-        ])
-      ]),
-      h('div',{className:'fld'},[
-        h('label',{className:'lbl'},'Firebase config (paste the full object)'),
-        h('textarea',{value:configStr,onChange:e=>setConfigStr(e.target.value),rows:6,placeholder:'{\n  "apiKey": "AIza...",\n  "authDomain": "...",\n  "projectId": "..."\n}'})
-      ]),
-      err&&h('div',{style:{color:'#B91C1C',fontSize:12,marginBottom:10}},err),
-      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},[
-        h('button',{className:'btn btn-navy',onClick:()=>setStep('new')},'✨ New planner'),
-        h('button',{className:'btn btn-ghost',onClick:()=>setStep('join')},'Join existing')
-      ])
-    ]),
-
-    step==='new'&&h('div',{key:'new',className:'setup-card'},[
-      h('div',{style:{fontSize:14,color:'#374151',marginBottom:16,lineHeight:1.6}},'Your cruise code — share this with anyone who needs access:'),
-      h('div',{className:'code-box'},cruiseCode),
-      h('button',{className:'btn btn-ghost btn-sm',style:{marginBottom:16,display:'block'},onClick:()=>setCruiseCode(genCode())},'↻ Generate new code'),
-      err&&h('div',{style:{color:'#B91C1C',fontSize:12,marginBottom:10}},err),
-      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},[
-        h('button',{className:'btn btn-ghost',onClick:()=>setStep('choice')},'← Back'),
-        h('button',{className:'btn btn-navy',onClick:()=>connect(cruiseCode),disabled:busy},busy?'Connecting…':'Create & connect')
-      ])
-    ]),
-
-    step==='join'&&h('div',{key:'join',className:'setup-card'},[
-      h('div',{className:'fld'},[
-        h('label',{className:'lbl'},'Enter cruise code'),
-        h('input',{value:joinCode,onChange:e=>setJoinCode(e.target.value.toUpperCase()),placeholder:'e.g. AB12CD',style:{fontSize:20,fontWeight:700,letterSpacing:'0.1em',textAlign:'center'}})
-      ]),
-      err&&h('div',{style:{color:'#B91C1C',fontSize:12,marginBottom:10}},err),
-      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},[
-        h('button',{className:'btn btn-ghost',onClick:()=>setStep('choice')},'← Back'),
-        h('button',{className:'btn btn-navy',onClick:()=>connect(joinCode),disabled:busy||!joinCode},busy?'Connecting…':'Join')
-      ])
+      h('button',{type:'submit',className:'btn btn-navy btn-full',disabled:!joinCode.trim()},'Access Planner')
     ])
   ]);
 }
 
-// ── MAIN APP ──────────────────────────────────────────────────────────────────
+// ── MAIN APP (INTEGRATED ROUTER) ─────────────────────────────────────────────
 function App({db,cruiseCode}){
-  const [data,setData]=useState(null);
+  const [sharedData,setSharedData]=useState(null);
+  const [privateData,setPrivateData]=useState(null);
   const [screen,setScreen]=useState('today');
-  const [modal,setModal]=useState(null);
-  const docRef=useRef(db.collection('cruises').doc(cruiseCode));
 
-  // Real-time Firestore listener
+  const baseGroupCode = cruiseCode.split('-')[0] || 'CRUISE';
+  
+  const sharedDocRef = useRef(db.collection('cruises').doc(baseGroupCode));
+  const privateDocRef = useRef(db.collection('cruises').doc(baseGroupCode).collection('profiles').doc(cruiseCode));
+
   useEffect(()=>{
-    return docRef.current.onSnapshot(
-      snap=>{
-        if(snap.exists){
-          setData(snap.data());
-        } else {
-          docRef.current.set(DEFAULT_DATA).catch(console.error);
-          setData(DEFAULT_DATA);
-        }
-      },
-      err=>console.error('Firestore listener error:',err)
-    );
+    const unsubShared = sharedDocRef.current.onSnapshot(snap => {
+      if(snap.exists){
+        setSharedData(snap.data());
+      } else {
+        const initialShared = {meta: META0, itin: ITIN0};
+        sharedDocRef.current.set(initialShared).catch(console.error);
+        setSharedData(initialShared);
+      }
+    });
+
+    const unsubPrivate = privateDocRef.current.onSnapshot(snap => {
+      if(snap.exists){
+        setPrivateData(snap.data());
+      } else {
+        const initialPrivate = {cruiseNotes:'', expenses:[], emergency:EMERGENCY0};
+        privateDocRef.current.set(initialPrivate).catch(console.error);
+        setPrivateData(initialPrivate);
+      }
+    });
+
+    return () => { unsubShared(); unsubPrivate(); };
+  }, [cruiseCode]);
+
+  const saveShared = useCallback(fields => {
+    sharedDocRef.current.update(fields).catch(e => console.error('Shared structural edit error:',e));
   },[]);
 
-  const save=useCallback(newData=>{
-    setData(newData);
-    docRef.current.set(newData).catch(e=>console.error('Save error:',e));
+  const savePrivate = useCallback(fields => {
+    privateDocRef.current.update(fields).catch(e => console.error('Profile structural edit error:',e));
   },[]);
 
-  if(!data){
+  if(!sharedData || !privateData){
     return h('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0C2340'}},
-      h('div',{style:{color:'#C9A45A',fontFamily:'Georgia,serif',fontSize:18}},'⚓ Loading your voyage…')
+      h('div',{style:{color:'#C9A45A',fontFamily:'Georgia,serif',fontSize:18}},'⚓ Synchronizing voyage parameters…')
     );
   }
+
+  const combinedDayData = {};
+  sharedData.itin.forEach(d => {
+    const pDay = privateData[`day_${d.day}`] || {};
+    combinedDayData[d.day] = {
+      excursions: pDay.excursions || [],
+      dining: pDay.dining || [],
+      places: pDay.places || [],
+      notes: pDay.notes || ''
+    };
+  });
+
+  const activeDayData = combinedDayData[sharedData.itin.find(d=>d.date===todayStr())?.day || 1] || {excursions:[], dining:[], places:[], notes:''};
+  
+  const dataset = {
+    meta: sharedData.meta,
+    itin: sharedData.itin.map(d => ({
+      ...d,
+      excursions: combinedDayData[d.day].excursions,
+      dining: combinedDayData[d.day].dining,
+      places: combinedDayData[d.day].places,
+      notes: combinedDayData[d.day].notes
+    })),
+    privateDayData: combinedDayData,
+    cruiseNotes: privateData.cruiseNotes,
+    expenses: privateData.expenses,
+    emergency: privateData.emergency
+  };
 
   const navItems=[
     {id:'today',icon:'🌅',label:'Today'},
@@ -761,31 +711,26 @@ function App({db,cruiseCode}){
   ];
 
   return h('div',{},[
-    // Header
     h('div',{key:'hd',style:{background:'#0C2340',paddingTop:'env(safe-area-inset-top)',position:'sticky',top:0,zIndex:50}},
       h('div',{style:{padding:'12px 16px 10px',maxWidth:900,margin:'0 auto',display:'flex',justifyContent:'space-between',alignItems:'center'}},[
         h('div',{key:'l'},[
-          h('div',{style:{fontFamily:'Georgia,serif',fontSize:18,fontWeight:700,color:'#C9A45A',lineHeight:1.2}},
-            '⚓ '+(data.meta.voyage||'My Cruise')),
+          h('div',{style:{fontFamily:'Georgia,serif',fontSize:18,fontWeight:700,color:'#C9A45A',lineHeight:1.2},onClick:()=>console.log(dataset)},
+            '⚓ '+(dataset.meta.voyage||'My Cruise')),
           h('div',{style:{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:1}},
-            [data.meta.ship,data.meta.cabin&&'Cabin '+data.meta.cabin].filter(Boolean).join(' · ')||'Oceania Allura')
+            [dataset.meta.ship, dataset.emergency.cabinNumber && 'Cabin '+dataset.emergency.cabinNumber].filter(Boolean).join(' · ')
+          )
         ]),
         h('button',{key:'r',className:'btn btn-sm',onClick:()=>setScreen('settings'),style:{background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.7)',border:'1px solid rgba(255,255,255,0.15)',padding:'6px 10px'}},'⚙️')
       ])
     ),
 
-    // Screen content
-    screen==='today'&&h(TodayScreen,{key:'today',data,onGoToDay:(n)=>{setScreen('days');}}),
-    screen==='days'&&h(DaysScreen,{key:'days',data,save}),
-    screen==='notes'&&h(NotesScreen,{key:'notes',data,save}),
-    screen==='expenses'&&h(ExpensesScreen,{key:'exp',data,save}),
-    screen==='emergency'&&h(EmergencyScreen,{key:'emg',data,save}),
-    screen==='settings'&&h(SettingsScreen,{key:'set',data,save,cruiseCode,onEditMeta:()=>setModal({t:'meta'})}),
+    screen==='today'&&h(TodayScreen,{key:'today',data:dataset,onGoToDay:(n)=>{setScreen('days');}}),
+    screen==='days'&&h(DaysScreen,{key:'days',data:dataset,saveShared,savePrivate}),
+    screen==='notes'&&h(NotesScreen,{key:'notes',data:dataset,savePrivate}),
+    screen==='expenses'&&h(ExpensesScreen,{key:'exp',data:dataset,savePrivate}),
+    screen==='emergency'&&h(EmergencyScreen,{key:'emg',data:dataset,savePrivate}),
+    screen==='settings'&&h(SettingsScreen,{key:'set',data:dataset,saveShared,cruiseCode}),
 
-    // Meta modal (accessible from settings)
-    modal?.t==='meta'&&h(MetaModal,{key:'mm',meta:data.meta,onSave:u=>{save({...data,meta:{...data.meta,...u}});setModal(null);},onClose:()=>setModal(null)}),
-
-    // Bottom nav
     h('div',{key:'nav',className:'bottom-nav'},
       navItems.map(n=>h('button',{key:n.id,className:'nav-btn'+(screen===n.id?' active':''),onClick:()=>setScreen(n.id)},
         [h('span',{key:'i',className:'nav-icon'},n.icon),h('span',{key:'l'},n.label)]
@@ -794,38 +739,44 @@ function App({db,cruiseCode}){
   ]);
 }
 
-// ── BOOT ──────────────────────────────────────────────────────────────────────
+// ── BOOT LOADER WITH HARDCODED DATABASE CONFIG ────────────────────────────────
+const baseFirebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+  projectId: "YOUR_FIREBASE_PROJECT_ID",
+  storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+  appId: "YOUR_FIREBASE_APP_ID"
+};
+
 function SetupWrapper(){
-  async function handleSetup(cfg,code){
-    lsSet('fbConfig',cfg);
+  function handleSetup(code){
     lsSet('cruiseCode',code);
-    await initAndRender(cfg,code);
+    initAndRender(code);
   }
   return h(SetupScreen,{onSetup:handleSetup});
 }
 
-async function initAndRender(cfg,code){
+async function initAndRender(code){
   try{
-    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    if(!firebase.apps.length) firebase.initializeApp(baseFirebaseConfig);
     const db=firebase.firestore();
     db.enablePersistence({synchronizeTabs:true}).catch(e=>{
-      if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('Persistence:',e);
+      if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('Offline Sync:',e);
     });
     ReactDOM.createRoot(document.getElementById('app')).render(h(App,{db,cruiseCode:code}));
   }catch(e){
-    console.error('Firebase init failed:',e);
-    alert('Could not connect to Firebase. Check your config and try again.\n\n'+e.message);
-    lsSet('fbConfig',null);
+    console.error('Firebase structural connection crash:',e);
+    alert('Could not hook into planner database structure:\n\n'+e.message);
     lsSet('cruiseCode',null);
     location.reload();
   }
 }
 
 (function boot(){
-  const cfg=lsGet('fbConfig');
   const code=lsGet('cruiseCode');
-  if(cfg&&code){
-    initAndRender(cfg,code);
+  if(code){
+    initAndRender(code);
   } else {
     ReactDOM.createRoot(document.getElementById('app')).render(h(SetupWrapper,{}));
   }
