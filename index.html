@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cruise Planner</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0C2340">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Cruise">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overscroll-behavior:none}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#F0F4F8;min-height:100vh;-webkit-tap-highlight-color:transparent}
+input,select,textarea{font-family:inherit;font-size:14px;color:#1A2B3C;background:#fff;border:1px solid #C8D5E0;border-radius:7px;padding:9px 12px;width:100%;outline:none;-webkit-appearance:none;appearance:none;transition:border 0.15s}
+input:focus,select:focus,textarea:focus{border-color:#2A9BAF;box-shadow:0 0 0 3px rgba(42,155,175,0.12)}
+textarea{resize:vertical;min-height:80px}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B8099' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.btn{font-family:inherit;font-size:13px;font-weight:600;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;transition:all 0.15s;user-select:none}
+.btn:active{transform:scale(0.97)}
+.btn-navy{background:#0C2340;color:#fff}
+.btn-ghost{background:#E8EFF6;color:#1A2B3C}
+.btn-danger{background:#FEE2E2;color:#B91C1C}
+.btn-gold{background:#B8893A;color:#fff}
+.btn-teal{background:#0E7490;color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.btn-full{width:100%}
+.lbl{display:block;font-size:11px;font-weight:700;color:#6B8099;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.card{background:#fff;border-radius:10px;border:1px solid #D0DCE8;padding:14px 16px;margin-bottom:10px}
+.tag{display:inline-block;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap}
+.tag-teal{color:#0E7490;background:#E0F5F9}
+.tag-gold{color:#92610A;background:#FBF3E0}
+.tag-green{color:#166534;background:#DCFCE7}
+.tag-red{color:#B91C1C;background:#FEE2E2}
+.tag-gray{color:#374151;background:#F3F4F6}
+.tag-purple{color:#6D28D9;background:#EDE9FE}
+.overlay{position:fixed;inset:0;background:rgba(10,28,52,0.6);z-index:300;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:600px){.overlay{align-items:center;padding:16px}}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media(min-width:600px){.modal{border-radius:14px;max-height:88vh}}
+.modal-hd{padding:16px 18px 14px;border-bottom:1px solid #E8EFF6;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+.modal-hd h2{font-family:Georgia,serif;font-size:16px;color:#0C2340;font-weight:700}
+.modal-bd{padding:18px 18px 24px}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{margin-bottom:13px}
+.tab-bar{display:flex;border-bottom:1px solid #D0DCE8;margin-bottom:18px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:9px 14px;font-size:13px;font-weight:600;color:#6B8099;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all 0.15s;flex-shrink:0}
+.tab-btn.active{color:#B8893A;border-bottom-color:#B8893A}
+.item-card{background:#fff;border-radius:9px;border:1px solid #D0DCE8;padding:13px 14px;margin-bottom:9px}
+.item-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px}
+.item-name{font-weight:700;font-size:14px;color:#0C2340;line-height:1.3}
+.item-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:#6B8099;margin:5px 0 2px}
+.item-note{font-size:12px;color:#374151;border-top:1px solid #EEF3F8;padding-top:8px;margin-top:8px;line-height:1.55}
+.item-actions{display:flex;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid #F0F4F8}
+.empty{text-align:center;padding:40px 20px;color:#6B8099}
+.empty-icon{font-size:40px;margin-bottom:10px}
+.empty-text{font-size:13px;margin-bottom:18px;line-height:1.5}
+.info-box{background:#EEF3F8;border-radius:8px;padding:12px 14px;font-size:13px;color:#374151;line-height:1.6;margin-bottom:14px}
+.info-box a{color:#0C2340;font-weight:600}
+.warn-box{background:#FEF9EC;border:1px solid #F59E0B;border-radius:8px;padding:11px 14px;font-size:13px;color:#92610A;line-height:1.5;margin-bottom:10px}
+.today-section{margin-bottom:18px}
+.today-section-title{font-size:11px;font-weight:700;color:#6B8099;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px}
+.today-row{background:#fff;border-radius:8px;border:1px solid #D0DCE8;padding:11px 13px;margin-bottom:7px;font-size:13px;color:#1A2B3C;line-height:1.4}
+.today-row strong{color:#0C2340}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #D0DCE8;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 2px 6px;border:none;background:none;cursor:pointer;font-size:9px;font-weight:700;color:#6B8099;font-family:inherit;gap:2px;letter-spacing:0.02em;text-transform:uppercase}
+.nav-btn.active{color:#B8893A}
+.nav-icon{font-size:20px;line-height:1}
+.main-content{max-width:900px;margin:0 auto;padding:16px 14px;padding-bottom:calc(env(safe-area-inset-bottom) + 90px)}
+.screen-title{font-family:Georgia,serif;font-size:18px;font-weight:700;color:#0C2340;margin-bottom:16px}
+.code-box{font-family:monospace;font-size:22px;font-weight:700;letter-spacing:0.15em;color:#0C2340;background:#F0F4F8;border:2px dashed #B8893A;border-radius:10px;padding:16px;text-align:center;margin:12px 0}
+.setup-card{background:#fff;border-radius:14px;border:1px solid #D0DCE8;padding:22px 20px;max-width:480px;margin:0 auto}
+.expense-total{background:#FBF5E8;border:1px solid rgba(184,137,58,0.25);border-radius:8px;padding:11px 14px;font-size:13px;margin-bottom:10px}
+.emg-row{margin-bottom:14px}
+.emg-label{font-size:11px;font-weight:700;color:#6B8099;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px}
+.emg-value{font-size:15px;color:#0C2340;font-weight:600;line-height:1.4}
+.emg-empty{color:#9CA3AF;font-style:italic;font-size:13px}
+.countdown-card{background:linear-gradient(135deg,#0C2340,#1A3F6B);border-radius:14px;padding:32px 24px;text-align:center;color:#fff;margin-bottom:18px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script>
+'use strict';
+const {useState,useEffect,useRef,useCallback,useMemo}=React;
+const h=React.createElement;
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function uid(){return Math.random().toString(36).slice(2,9);}
+function genCode(){return Math.random().toString(36).slice(2,8).toUpperCase();}
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function fmtDate(s){if(!s)return'';try{return new Date(s+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});}catch{return s;}}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function currencySymbol(c){return{EUR:'€',GBP:'£',USD:'$',CHF:'CHF '}[c]||c+' ';}
+
+// ── PRE-FILLED DATA ─────────────────────────────────────────────────────────
+const META0={ship:'Oceania Allura',voyage:'Mediterranean Cruise 2026',startDate:'2026-06-25',cabin:'',deck:''};
+const EMERGENCY0={cabinNumber:'',insuranceProvider:'',insurancePolicyNumber:'',insurancePhone:'',contact1Name:'',contact1Phone:'',contact1Relation:'',contact2Name:'',contact2Phone:'',contact2Relation:'',oceaniaGuestServices:'',notes:''};
+const ITIN0=[
+{day:1,date:'2026-06-25',port:'Barcelona',country:'Spain',arrival:'',departure:'5:00 PM',isSeaDay:false,portNotes:'Embarkation day. Board from 1:00 PM. Sail-away 5:00 PM.',excursions:[],dining:[],places:[{id:'p1a',name:'Gothic Quarter',category:'Historical',description:'Medieval streets around Barcelona Cathedral — worth exploring if arriving early before boarding.',tips:'Close to terminal. Keep it short — must be on board well before 5:00 PM sail-away.'},{id:'p1b',name:'Las Ramblas',category:'Must see',description:'Famous tree-lined boulevard from Plaça de Catalunya to the waterfront.',tips:'Watch your belongings. Good for a quick coffee and people-watching pre-boarding.'}],notes:''},
+{day:2,date:'2026-06-26',port:'Marseille',country:'France',arrival:'7:00 AM',departure:'5:00 PM',isSeaDay:false,portNotes:'Walk-off port. Taxi approximately 15 min to Vieux-Port. Independent exploration.',excursions:[],dining:[],places:[{id:'p2a',name:'Vieux-Port (Old Harbour)',category:'Must see',description:'Historic heart of Marseille — colourful fishing boats, restaurants, lively waterfront. Morning fish market along the quay.',tips:'Taxi from ship ~15 min. Fish market best in the morning.'},{id:'p2b',name:'Notre-Dame de la Garde',category:'Cultural',description:'Iconic hilltop basilica with panoramic views over Marseille and the sea.',tips:'Taxi up, walk down or taxi both ways. Views are superb — highly recommended.'},{id:'p2c',name:'Le Panier District',category:'Cultural',description:'Marseille\'s oldest neighbourhood — colourful streets, local art and artisan shops.',tips:'Easy to combine with Vieux-Port. Mostly flat and walkable from the harbour.'}],notes:''},
+{day:3,date:'2026-06-27',port:'Monte Carlo',country:'Monaco',arrival:'8:00 AM',departure:'8:00 PM',isSeaDay:false,portNotes:'TENDER PORT — tender ~30 min each way. Long day until 8:00 PM. Red Ginger dinner on board 8:00 PM — allow time to return and change.',excursions:[],dining:[{id:'d3a',restaurant:'Red Ginger',time:'8:00 PM',guests:'2',type:'Specialty',confirmation:'',notes:'Sharing table (Y). Asian fusion cuisine.'}],places:[{id:'p3a',name:'Casino de Monte-Carlo',category:'Must see',description:'Iconic Belle Époque casino. Exterior, gardens and Place du Casino are spectacular even without gambling.',tips:'Smart dress required for gaming rooms. Exterior and square are free.'},{id:'p3b',name:'Palais Princier',category:'Historical',description:'Official residence of the Prince of Monaco — commanding views over the harbour.',tips:'Changing of the guard daily at 11:55 AM. Palace tours when Prince not in residence.'},{id:'p3c',name:'Port Hercule',category:'Must see',description:'One of the world\'s most glamorous harbours. Formula 1 circuit runs alongside — you can walk sections of the track.',tips:'Tender drops you right here. Casino Square a short uphill walk.'},{id:'p3d',name:'Jardin Exotique',category:'Nature',description:'Clifftop garden with remarkable cacti and succulents, sweeping views over Monaco.',tips:'Quieter alternative to the Casino area. Small entry fee — check opening times.'}],notes:''},
+{day:4,date:'2026-06-28',port:'Ajaccio',country:'Corsica, France',arrival:'7:00 AM',departure:'5:00 PM',isSeaDay:false,portNotes:'Walk-off port. Compact town — most sights walkable from the pier.',excursions:[],dining:[],places:[{id:'p4a',name:'Maison Bonaparte',category:'Historical',description:'Napoleon\'s birthplace, now a museum detailing the Bonaparte family history in Corsica.',tips:'Short walk from pier. May close at lunchtimes — worth checking.'},{id:'p4b',name:'Cathédrale Notre-Dame de l\'Assomption',category:'Cultural',description:'Cathedral where Napoleon was baptised in 1771. Beautiful interior, free entry.',tips:'A few minutes from Maison Bonaparte — easy to combine.'},{id:'p4c',name:'Marché Central',category:'Food & drink',description:'Lively morning market — Corsican cheeses, charcuterie, honey, local produce.',tips:'Best before 12:30 PM. Try chestnut products and figatellu sausage — Corsican specialities.'},{id:'p4d',name:'Plage du Ricanto',category:'Beach',description:'Sandy beach with clear water, short taxi ride from town.',tips:'~10 min by taxi from port. Good option for a morning swim before returning to ship.'}],notes:''},
+{day:5,date:'2026-06-29',port:'Civitavecchia (Rome)',country:'Italy',arrival:'7:00 AM',departure:'7:00 PM',isSeaDay:false,portNotes:'Coach to Rome ~75–90 min each way. Full day in port. Oceania excursion credit applies. Excursion departs 8:45 AM — be at meeting point early.',excursions:[{id:'e5a',name:'Hop On Hop Off Rome W/Transfer',time:'8:45 AM – 4:45 PM',duration:'Full day (~8.5 hrs)',price:'',operator:'Oceania Shore Excursions (CIV-030)',status:'Booked',notes:'Both guests booked. Coach transfer included. HOHO bus in Rome once transferred.'}],dining:[],places:[{id:'p5a',name:'Colosseum',category:'Historical',description:'Iconic Roman amphitheatre — one of the great monuments of the ancient world. HOHO bus stops nearby.',tips:'Allow at least an hour. Your transfer gets you there.'},{id:'p5b',name:'Trevi Fountain',category:'Must see',description:'Rome\'s most famous fountain. Throw a coin to ensure your return.',tips:'Very crowded midday — earlier or later in the afternoon is quieter.'},{id:'p5c',name:'Vatican & St Peter\'s Basilica',category:'Cultural',description:'St Peter\'s Square, the Basilica and Michelangelo\'s Pietà. Entry to the Basilica is free.',tips:'Modest dress required — shoulders and knees covered. Security queues can be long.'},{id:'p5d',name:'Pantheon',category:'Historical',description:'Remarkably preserved Roman temple — the dome was the world\'s largest for over 1,300 years.',tips:'Small entry fee now applies. Do not skip this if the HOHO route passes it.'}],notes:''},
+{day:6,date:'2026-06-30',port:'Amalfi Coast',country:'Italy',arrival:'8:00 AM',departure:'6:00 PM',isSeaDay:false,portNotes:'TENDER PORT — tender ~30 min each way. Tender destination likely Amalfi town — confirm on previous evening\'s programme. Jacques dinner on board 8:30 PM.',excursions:[],dining:[{id:'d6a',restaurant:'Jacques',time:'8:30 PM',guests:'2',type:'Specialty',confirmation:'',notes:'Private table (N). French bistro cuisine.'}],places:[{id:'p6a',name:'Amalfi Town',category:'Must see',description:'Likely tender landing point. Cathedral of Sant\'Andrea, main piazza, ceramics shops, historic paper museum.',tips:'Arrive early — very busy with cruise visitors by late morning.'},{id:'p6b',name:'Positano',category:'Must see',description:'Most photographed village on the coast — pastel houses, boutiques, beach. Local ferry from Amalfi.',tips:'Ferry from Amalfi ~30 min. Many steps — comfortable shoes essential.'},{id:'p6c',name:'Ravello',category:'Cultural',description:'Hilltop village above Amalfi — beautiful gardens at Villa Rufolo and Villa Cimbrone, panoramic views.',tips:'Bus from Amalfi ~30 min uphill. Quieter than Positano and equally beautiful.'},{id:'p6d',name:'Ceramics & Limoncello',category:'Shopping',description:'Amalfi Coast known for hand-painted ceramics and limoncello. Good souvenir shopping in Amalfi town.',tips:'Better prices and selection in Amalfi town compared to Positano.'}],notes:''},
+{day:7,date:'2026-07-01',port:'Taormina',country:'Sicily, Italy',arrival:'7:00 AM',departure:'4:00 PM',isSeaDay:false,portNotes:'TENDER PORT — tender then taxi uphill to Taormina town. Half day. Aim to be at tender point by 3:00 PM for 4:00 PM all aboard.',excursions:[],dining:[],places:[{id:'p7a',name:'Teatro Antico di Taormina',category:'Historical',description:'Ancient Greek-Roman theatre with breathtaking backdrop of Mount Etna and the sea. One of the most beautiful ancient sites in the Mediterranean.',tips:'Go early to beat tour groups. Exposed site — bring water and sun protection.'},{id:'p7b',name:'Corso Umberto',category:'Must see',description:'Pedestrian main street — boutiques, cafes, flower-filled piazzas. Runs from Porta Messina to Porta Catania.',tips:'Easy walk from the theatre. Leads to Piazza IX Aprile for best sea and Etna views.'},{id:'p7c',name:'Piazza IX Aprile',category:'Must see',description:'Main terrace square with dramatic views of the coastline and Mount Etna.',tips:'Try granita al caffè or almond granita — a Sicilian speciality.'},{id:'p7d',name:'Mount Etna Views',category:'Nature',description:'Europe\'s most active volcano, visible from almost everywhere in Taormina on a clear day.',tips:'The theatre and Piazza IX Aprile give the best viewpoints from town.'}],notes:'Half day — prioritise the theatre and Corso Umberto. Keep a close eye on the time.'},
+{day:8,date:'2026-07-02',port:'Katakolon (Olympia)',country:'Greece',arrival:'11:00 AM',departure:'6:00 PM',isSeaDay:false,portNotes:'Ship arrives 11:00 AM. Coach to Ancient Olympia ~45 min each way. Oceania excursion credit applies. Excursion departs 12:30 PM.',excursions:[{id:'e8a',name:'Ancient Olympia',time:'12:30 PM – 4:30 PM',duration:'Half day (~4.5 hrs)',price:'',operator:'Oceania Shore Excursions (KAK-001)',status:'Booked',notes:'Both guests booked. Coach transfer included. Birthplace of the Olympic Games.'}],dining:[],places:[{id:'p8a',name:'Ancient Olympia Site',category:'Historical',description:'Birthplace of the Olympic Games. Ruins include Temple of Zeus, the original stadium and the Philippeion.',tips:'Covered by your excursion. Large site — comfortable shoes and water essential.'},{id:'p8b',name:'Archaeological Museum of Olympia',category:'Cultural',description:'Houses the statue of Hermes by Praxiteles and the Nike of Paionios — among the finest ancient sculptures in Greece.',tips:'Usually included in excursion ticket. One of Greece\'s best museums.'},{id:'p8c',name:'Katakolon Village',category:'Food & drink',description:'Small port village with tavernas and shops, walkable from pier.',tips:'Right at the port. Time for a short walk and coffee before the 12:30 PM departure.'}],notes:''},
+{day:9,date:'2026-07-03',port:'',country:'',arrival:'',departure:'',isSeaDay:true,portNotes:'',excursions:[],dining:[],places:[],notes:'Rest and recovery day. Adriatic crossing. Spa, lectures and fine dining on board.'},
+{day:10,date:'2026-07-04',port:'Kotor',country:'Montenegro',arrival:'7:00 AM',departure:'5:00 PM',isSeaDay:false,portNotes:'TENDER PORT — tender ~30 min each way. UNESCO World Heritage Old Town. Full day. Toscana dinner on board 9:00 PM.',excursions:[],dining:[{id:'d10a',restaurant:'Toscana',time:'9:00 PM',guests:'2',type:'Specialty',confirmation:'',notes:'Private table (N). Italian cuisine. Late dinner — works well after a full day ashore.'}],places:[{id:'p10a',name:'Kotor Old Town (UNESCO)',category:'Historical',description:'Beautifully preserved medieval walled city — winding lanes, Venetian palaces, famous street cats. Completely flat inside the walls.',tips:'Enter through the Sea Gate. Manageable in 2–3 hours.'},{id:'p10b',name:'City Walls & Fortress of San Giovanni',category:'Adventure',description:'~1,350 steps up the medieval walls to the fortress, panoramic views over the Bay of Kotor.',tips:'Take water and go early before the heat builds. Allow 1–1.5 hours. Views are outstanding.'},{id:'p10c',name:'Bay of Kotor',category:'Nature',description:'Often described as Europe\'s southernmost fjord — dramatic mountain scenery meeting the sea.',tips:'Boat trips around the bay depart from inside the old town walls.'},{id:'p10d',name:'Cathedral of Saint Tryphon',category:'Cultural',description:'12th-century Romanesque cathedral at the heart of the old town.',tips:'Small entry fee. Beautiful interior with medieval frescoes.'}],notes:''},
+{day:11,date:'2026-07-05',port:'Dubrovnik',country:'Croatia',arrival:'7:00 AM',departure:'4:00 PM',isSeaDay:false,portNotes:'Half day. Taxi ~15 min to Old Town. Extremely busy with cruise visitors — go as early as possible. All aboard 4:00 PM.',excursions:[],dining:[{id:'d11a',restaurant:'Polo Grill',time:'8:30 PM',guests:'2',type:'Specialty',confirmation:'',notes:'Private table (N). Steakhouse.'}],places:[{id:'p11a',name:'City Walls of Dubrovnik',category:'Must see',description:'Walk the complete 2km circuit of medieval walls — spectacular views over old town rooftops and the Adriatic.',tips:'Go first thing — opens early, gets very crowded and hot later. Bring water. Allow ~1.5 hours.'},{id:'p11b',name:'Stradun (Placa)',category:'Must see',description:'Dubrovnik\'s gleaming limestone main street, lined with cafes and shops.',tips:'Best appreciated early morning before the cruise crowds arrive.'},{id:'p11c',name:'Cable Car to Mount Srđ',category:'Adventure',description:'Gondola ride to 412m above Dubrovnik with extraordinary panoramic views.',tips:'Can have queues — go early. Summit has a cafe and small war museum.'},{id:'p11d',name:'Lokrum Island',category:'Nature',description:'Forested island 10 min by ferry — peacocks, botanical garden, monastery, swimming spots.',tips:'Ferry runs regularly from the old harbour. Good escape from old town crowds.'}],notes:''},
+{day:12,date:'2026-07-06',port:'Rovinj',country:'Croatia',arrival:'11:00 AM',departure:'8:00 PM',isSeaDay:false,portNotes:'TENDER PORT if anchored — confirm on previous evening\'s programme. Late 8:00 PM departure — relaxed afternoon and evening.\n\n⚠️ PORT NOTE: Some published itineraries list Pula for this day instead of Rovinj. Verify with the ship\'s daily programme the evening before.',excursions:[],dining:[],places:[{id:'p12a',name:'Rovinj Old Town Peninsula',category:'Must see',description:'One of the most beautiful towns on the Adriatic — Venetian-style buildings on a compact peninsula, colourful harbour, cobbled lanes. Very photogenic especially towards sunset.',tips:'Entire old town is walkable. Climb to St Euphemia for best views. Allow 2–3 hours.'},{id:'p12b',name:'Church of St Euphemia',category:'Cultural',description:'18th-century baroque church crowning the old town. Bell tower gives best panoramic views of Rovinj and surrounding islands.',tips:'Climbing the bell tower is worth it for the harbour views.'},{id:'p12c',name:'Grisia Street',category:'Shopping',description:'Rovinj\'s art street — local artists display and sell original work along cobbled steps to St Euphemia.',tips:'Good for original artwork as a cruise souvenir. Browse before committing.'},{id:'p12d',name:'Golden Cape Forest Park',category:'Nature',description:'Coastal park with forest, rocky shoreline and clear water, 10 min walk south of old town.',tips:'Free entry. Bring swimwear — excellent clear water for a swim on a warm afternoon.'}],notes:'Last full port day. Late 8:00 PM departure — no rush. Lovely evening light in the old town.'},
+{day:13,date:'2026-07-07',port:'Trieste',country:'Italy',arrival:'8:00 AM',departure:'',isSeaDay:false,portNotes:'Disembarkation day. Ship arrives 8:00 AM. Taxi or train to airport. Optional extra night in Trieste.',excursions:[],dining:[],places:[{id:'p13a',name:'Piazza Unità d\'Italia',category:'Must see',description:'One of the largest seaside squares in Europe — grand Austro-Hungarian architecture opening onto the Gulf of Trieste.',tips:'Worth a walk if disembarking later or staying an extra night.'},{id:'p13b',name:'Trieste Coffee Culture',category:'Food & drink',description:'One of Italy\'s strongest café cultures, shaped by its Austro-Hungarian past.',tips:'Try a "capo in b" — espresso with a little milk in a glass, the local style.'}],notes:'Put luggage outside cabin night before (check Oceania instructions for time). Note disembarkation group number and meeting time.'}
+];
+const DEFAULT_DATA={meta:META0,itin:ITIN0,cruiseNotes:'',expenses:[],emergency:EMERGENCY0};
+
+// ── SHARED UI ───────────────────────────────────────────────────────────────
+function Fld({label,children}){return h('div',{className:'fld'},[h('label',{key:'l',className:'lbl'},label),children]);}
+function Inp({label,value,onChange,placeholder,type='text',rows,autoComplete}){
+  const el=rows?h('textarea',{value:value||'',onChange:e=>onChange(e.target.value),placeholder,rows}):h('input',{type,value:value||'',onChange:e=>onChange(e.target.value),placeholder,autoComplete:autoComplete||'off'});
+  return label?h(Fld,{label},el):el;
+}
+function Sel({label,value,onChange,opts}){
+  return h(Fld,{label},h('select',{value,onChange:e=>onChange(e.target.value)},opts.map(o=>h('option',{key:o},o))));
+}
+function Modal({title,onClose,onSave,saveLabel,children}){
+  return h('div',{className:'overlay',onClick:e=>{if(e.target===e.currentTarget)onClose();}},
+    h('div',{className:'modal'},[
+      h('div',{key:'hd',className:'modal-hd'},[h('h2',{key:'t'},title),h('button',{key:'x',className:'btn btn-ghost btn-sm',onClick:onClose},'✕')]),
+      h('div',{key:'bd',className:'modal-bd'},[
+        children,
+        onSave&&h('div',{key:'btns',style:{display:'flex',gap:8,marginTop:14}},
+          [h('button',{key:'s',className:'btn btn-navy',onClick:onSave,style:{flex:1}},saveLabel||'Save'),
+           h('button',{key:'c',className:'btn btn-ghost',onClick:onClose},'Cancel')]
+        )
+      ])
+    ])
+  );
+}
+function ICard({children,onEdit,onDelete}){
+  return h('div',{className:'item-card'},[
+    children,
+    h('div',{key:'a',className:'item-actions'},
+      [h('button',{key:'e',className:'btn btn-ghost btn-sm',onClick:onEdit},'✎ Edit'),
+       h('button',{key:'d',className:'btn btn-danger btn-sm',onClick:onDelete},'✕ Remove')]
+    )
+  ]);
+}
+function Empty({icon,text,onAdd,addLabel}){
+  return h('div',{className:'empty'},[
+    h('div',{key:'i',className:'empty-icon'},icon),
+    h('div',{key:'t',className:'empty-text'},text),
+    h('button',{key:'b',className:'btn btn-navy',onClick:onAdd},addLabel)
+  ]);
+}
+function statusTag(s){
+  const map={Booked:'tag-green',Waitlisted:'tag-gold',Considering:'tag-teal',Cancelled:'tag-red'};
+  return h('span',{className:'tag '+(map[s]||'tag-gray')},s);
+}
+
+// ── FORM MODALS ─────────────────────────────────────────────────────────────
+function MetaModal({meta,onSave,onClose}){
+  const [f,setF]=useState({...meta});
+  const u=k=>v=>setF(p=>({...p,[k]:v}));
+  return h(Modal,{title:'Cruise details',onClose,onSave:()=>onSave(f)},[
+    h(Inp,{key:'v',label:'Voyage name',value:f.voyage,onChange:u('voyage')}),
+    h(Inp,{key:'s',label:'Ship name',value:f.ship,onChange:u('ship')}),
+    h(Inp,{key:'d',label:'Embarkation date',value:f.startDate,onChange:u('startDate'),type:'date'}),
+    h('div',{key:'r',className:'mrow'},[
+      h(Inp,{key:'c',label:'Cabin number',value:f.cabin,onChange:u('cabin')}),
+      h(Inp,{key:'dk',label:'Deck',value:f.deck,onChange:u('deck')})
+    ])
+  ]);
+}
+function PortModal({day,onSave,onClose}){
+  const [f,setF]=useState({port:day.port,country:day.country,date:day.date,arrival:day.arrival,departure:day.departure,isSeaDay:day.isSeaDay||false,portNotes:day.portNotes||''});
+  const u=k=>v=>setF(p=>({...p,[k]:v}));
+  return h(Modal,{title:'Day '+day.day+' — port info',onClose,onSave:()=>onSave(f)},[
+    h('div',{key:'sea',className:'fld'},
+      h('label',{style:{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:14,fontWeight:600}},
+        [h('input',{key:'cb',type:'checkbox',checked:f.isSeaDay,onChange:e=>setF(p=>({...p,isSeaDay:e.target.checked})),style:{width:18,height:18,accentColor:'#0C2340'}}),'Day at sea']
+      )
+    ),
+    !f.isSeaDay&&h(React.Fragment,{key:'pf'},[
+      h('div',{key:'r0',className:'mrow'},[h(Inp,{key:'p',label:'Port',value:f.port,onChange:u('port')}),h(Inp,{key:'co',label:'Country',value:f.country,onChange:u('country')})]),
+      h(Inp,{key:'dt',label:'Date',value:f.date,onChange:u('date'),type:'date'}),
+      h('div',{key:'td',className:'mrow'},[h(Inp,{key:'a',label:'Arrives',value:f.arrival,onChange:u('arrival')}),h(Inp,{key:'dep',label:'Departs',value:f.departure,onChange:u('departure')})]),
+      h(Inp,{key:'pn',label:'Port notes',value:f.portNotes,onChange:u('portNotes'),rows:4})
+    ])
+  ]);
+}
+function ExModal({init,onSave,onClose}){
+  const [f,setF]=useState({name:'',time:'',duration:'',price:'',operator:'',status:'Booked',notes:'',...(init||{})});
+  const u=k=>v=>setF(p=>({...p,[k]:v}));
+  return h(Modal,{title:init&&init.id?'Edit excursion':'Add excursion',onClose,onSave:()=>onSave(f)},[
+    h(Inp,{key:'n',label:'Excursion name',value:f.name,onChange:u('name'),placeholder:'e.g. City walking tour'}),
+    h('div',{key:'r1',className:'mrow'},[h(Inp,{key:'t',label:'Time',value:f.time,onChange:u('time'),placeholder:'9:00 AM'}),h(Inp,{key:'d',label:'Duration',value:f.duration,onChange:u('duration'),placeholder:'3 hours'})]),
+    h('div',{key:'r2',className:'mrow'},[h(Inp,{key:'p',label:'Price/person',value:f.price,onChange:u('price'),placeholder:'$89'}),h(Sel,{key:'s',label:'Status',value:f.status,onChange:u('status'),opts:['Booked','Waitlisted','Considering','Cancelled']})]),
+    h(Inp,{key:'op',label:'Operator',value:f.operator,onChange:u('operator')}),
+    h(Inp,{key:'nt',label:'Notes',value:f.notes,onChange:u('notes'),rows:3})
+  ]);
+}
+function DiModal({init,onSave,onClose}){
+  const [f,setF]=useState({restaurant:'',time:'',guests:'2',type:'Specialty',confirmation:'',notes:'',...(init||{})});
+  const u=k=>v=>setF(p=>({...p,[k]:v}));
+  return h(Modal,{title:init&&init.id?'Edit reservation':'Add dining reservation',onClose,onSave:()=>onSave(f)},[
+    h(Inp,{key:'n',label:'Restaurant',value:f.restaurant,onChange:u('restaurant')}),
+    h('div',{key:'r1',className:'mrow'},[h(Inp,{key:'t',label:'Time',value:f.time,onChange:u('time'),placeholder:'7:30 PM'}),h(Sel,{key:'tp',label:'Type',value:f.type,onChange:u('type'),opts:['Specialty','Main dining','Buffet','Private','Ashore']})]),
+    h('div',{key:'r2',className:'mrow'},[h(Inp,{key:'g',label:'Guests',value:f.guests,onChange:u('guests')}),h(Inp,{key:'c',label:'Confirmation #',value:f.confirmation,onChange:u('confirmation')})]),
+    h(Inp,{key:'nt',label:'Notes',value:f.notes,onChange:u('notes'),rows:3})
+  ]);
+}
+function PlModal({init,onSave,onClose}){
+  const [f,setF]=useState({name:'',category:'Must see',description:'',tips:'',...(init||{})});
+  const u=k=>v=>setF(p=>({...p,[k]:v}));
+  return h(Modal,{title:init&&init.id?'Edit place':'Add place to explore',onClose,onSave:()=>onSave(f)},[
+    h(Inp,{key:'n',label:'Place / attraction',value:f.name,onChange:u('name')}),
+    h(Sel,{key:'c',label:'Category',value:f.category,onChange:u('category'),opts:['Must see','Beach','Food & drink','Shopping','Cultural','Nature','Historical','Adventure','Hidden gem','Relaxation']}),
+    h(Inp,{key:'d',label:'Description',value:f.description,onChange:u('description'),rows:3}),
+    h(Inp,{key:'t',label:'Tips',value:f.tips,onChange:u('tips')})
+  ]);
+}
+function ExpenseModal({init,dayOptions,onSave,onClose}){
+  const [f,setF]=useState({date:todayStr(),port:'',description:'',amount:'',currency:'EUR',...(init||{})});
+  const u=k=>v=>setF(p=>({...p,[k]:v}));
+  return h(Modal,{title:init&&init.id?'Edit expense':'Add expense',onClose,onSave:()=>onSave({...f,amount:parseFloat(f.amount)||0})},[
+    h('div',{key:'r1',className:'mrow'},[
+      h(Inp,{key:'dt',label:'Date',value:f.date,onChange:u('date'),type:'date'}),
+      h(Sel,{key:'cu',label:'Currency',value:f.currency,onChange:u('currency'),opts:['EUR','GBP','USD','CHF']})
+    ]),
+    h(Inp,{key:'p',label:'Port / location',value:f.port,onChange:u('port'),placeholder:'e.g. Kotor'}),
+    h(Inp,{key:'desc',label:'Description',value:f.description,onChange:u('description'),placeholder:'e.g. Lunch at harbour taverna'}),
+    h(Inp,{key:'amt',label:'Amount',value:f.amount,onChange:u('amount'),placeholder:'0.00',type:'number'})
+  ]);
+}
+function EmergencyModal({emergency,onSave,onClose}){
+  const [f,setF]=useState({...emergency});
+  const u=k=>v=>setF(p=>({...p,[k]:v}));
+  return h(Modal,{title:'Edit emergency info',onClose,onSave:()=>onSave(f)},[
+    h(Inp,{key:'cn',label:'Cabin number',value:f.cabinNumber,onChange:u('cabinNumber')}),
+    h('div',{key:'ins',style:{borderTop:'1px solid #EEF3F8',paddingTop:12,marginTop:4,marginBottom:4}}),
+    h(Inp,{key:'ip',label:'Insurance provider',value:f.insuranceProvider,onChange:u('insuranceProvider')}),
+    h('div',{key:'r1',className:'mrow'},[h(Inp,{key:'ipn',label:'Policy number',value:f.insurancePolicyNumber,onChange:u('insurancePolicyNumber')}),h(Inp,{key:'iph',label:'Emergency phone',value:f.insurancePhone,onChange:u('insurancePhone')})]),
+    h('div',{key:'c1',style:{borderTop:'1px solid #EEF3F8',paddingTop:12,marginTop:4,marginBottom:4}}),
+    h('div',{key:'r2',className:'mrow'},[h(Inp,{key:'c1n',label:'Emergency contact 1 name',value:f.contact1Name,onChange:u('contact1Name')}),h(Inp,{key:'c1r',label:'Relation',value:f.contact1Relation,onChange:u('contact1Relation')})]),
+    h(Inp,{key:'c1p',label:'Contact 1 phone',value:f.contact1Phone,onChange:u('contact1Phone')}),
+    h('div',{key:'r3',className:'mrow'},[h(Inp,{key:'c2n',label:'Emergency contact 2 name',value:f.contact2Name,onChange:u('contact2Name')}),h(Inp,{key:'c2r',label:'Relation',value:f.contact2Relation,onChange:u('contact2Relation')})]),
+    h(Inp,{key:'c2p',label:'Contact 2 phone',value:f.contact2Phone,onChange:u('contact2Phone')}),
+    h('div',{key:'oc',style:{borderTop:'1px solid #EEF3F8',paddingTop:12,marginTop:4,marginBottom:4}}),
+    h(Inp,{key:'og',label:'Oceania Guest Services (ship)',value:f.oceaniaGuestServices,onChange:u('oceaniaGuestServices')}),
+    h(Inp,{key:'nt',label:'Other notes',value:f.notes,onChange:u('notes'),rows:3})
+  ]);
+}
+
+// ── TODAY SCREEN ─────────────────────────────────────────────────────────────
+function TodayScreen({data,onGoToDay}){
+  const today=todayStr();
+  const day=data.itin.find(d=>d.date===today);
+  const startDate=data.itin[0]?.date;
+  const endDate=data.itin[data.itin.length-1]?.date;
+
+  if(today<startDate){
+    const days=Math.ceil((new Date(startDate)-new Date(today))/(1000*60*60*24));
+    return h('div',{className:'main-content'},[
+      h('div',{key:'cd',className:'countdown-card'},[
+        h('div',{style:{fontSize:48,marginBottom:8}},'⚓'),
+        h('div',{style:{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,marginBottom:6}},data.meta.voyage||'Your Cruise'),
+h('div',{style:{fontSize:15,opacity:0.75,marginBottom:16}},data.meta.ship||''),
+h('div',{style:{fontSize:42,fontWeight:700,color:'#C9A45A'}},days),
+        h('div',{style:{fontSize:14,opacity:0.8}},'days until departure')
+      ]),
+      h('div',{key:'sc',className:'card'},[
+        h('div',{className:'lbl'},'Embarkation'),
+        h('div',{style:{fontWeight:700,color:'#0C2340',fontSize:15}},fmtDate(startDate)),
+        h('div',{style:{fontSize:13,color:'#6B8099',marginTop:2}},data.meta.ship+' · '+data.itin[0]?.port)
+      ])
+    ]);
+  }
+
+  if(today>endDate){
+    return h('div',{className:'main-content'},
+      h('div',{className:'countdown-card'},[
+        h('div',{style:{fontSize:48,marginBottom:8}},'🥂'),
+        h('div',{style:{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,marginBottom:6}},'Voyage Complete'),
+        h('div',{style:{fontSize:14,opacity:0.75}},data.meta.voyage)
+      ])
+    );
+  }
+
+  if(!day){
+    return h('div',{className:'main-content'},
+      h('div',{className:'card',style:{textAlign:'center',padding:30,color:'#6B8099'}},'No itinerary entry for today.')
+    );
+  }
+
+  const topPlaces=day.places.slice(0,3);
+  return h('div',{className:'main-content'},[
+    // Day header
+    h('div',{key:'dh',style:{marginBottom:18}},[
+      h('div',{style:{fontSize:11,fontWeight:700,color:'#B8893A',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:4}},'Today · Day '+day.day),
+      h('div',{style:{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'#0C2340',lineHeight:1.2}},
+        day.isSeaDay?'Day at Sea 🌊':day.port+(day.country?', '+day.country:'')),
+      day.portNotes&&h('div',{key:'warn',style:{marginTop:8}},
+        day.portNotes.split('\n').filter(l=>l.startsWith('⚠️')).map((l,i)=>h('div',{key:i,className:'warn-box'},l))
+      )
+    ]),
+
+    // Times & tender
+    !day.isSeaDay&&h('div',{key:'times',className:'card',style:{marginBottom:10}},[
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        [h('div',{key:'ar'},[h('div',{className:'lbl'},'Arrives'),h('div',{style:{fontWeight:700,color:'#0C2340'}},day.arrival||'—')]),
+         h('div',{key:'dep'},[h('div',{className:'lbl'},'Departs'),h('div',{style:{fontWeight:700,color:'#0C2340'}},day.departure||'—')])]
+      ),
+      day.portNotes&&day.portNotes.includes('TENDER')&&h('div',{key:'t',style:{marginTop:10}},h('span',{className:'tag tag-purple'},'⚓ Tender port'))
+    ]),
+
+    // Excursions
+    day.excursions.length>0&&h('div',{key:'ex',className:'today-section'},[
+      h('div',{className:'today-section-title'},'Excursions'),
+      ...day.excursions.map(e=>h('div',{key:e.id,className:'today-row'},[
+        h('strong',{},(e.status==='Booked'?'✅ ':'📋 ')+e.name),
+        h('div',{style:{color:'#6B8099',fontSize:12,marginTop:2}},(e.time?e.time:'')+(e.duration?' · '+e.duration:''))
+      ]))
+    ]),
+
+    // Dining
+    day.dining.length>0&&h('div',{key:'di',className:'today-section'},[
+      h('div',{className:'today-section-title'},'Dining tonight'),
+      ...day.dining.map(r=>h('div',{key:r.id,className:'today-row'},[
+        h('strong',{},'🍽 '+r.restaurant),
+        h('div',{style:{color:'#6B8099',fontSize:12,marginTop:2}},r.time+(r.guests?' · '+r.guests+' guests':''))
+      ]))
+    ]),
+
+    // Top places
+    topPlaces.length>0&&h('div',{key:'pl',className:'today-section'},[
+      h('div',{className:'today-section-title'},'Top picks for today'),
+      ...topPlaces.map(p=>h('div',{key:p.id,className:'today-row'},[
+        h('strong',{},'📍 '+p.name),
+        p.tips&&h('div',{style:{color:'#6B8099',fontSize:12,marginTop:2}},p.tips)
+      ]))
+    ]),
+
+    // Notes
+    day.notes&&h('div',{key:'nt',className:'today-section'},[
+      h('div',{className:'today-section-title'},'My notes'),
+      h('div',{className:'today-row'},day.notes)
+    ]),
+
+    // Link to full day
+    h('button',{key:'link',className:'btn btn-ghost btn-full',style:{marginTop:4},onClick:()=>onGoToDay(day.day)},'View full Day '+day.day+' details →')
+  ]);
+}
+
+// ── DAYS SCREEN ──────────────────────────────────────────────────────────────
+function DaysScreen({data,save}){
+  const [sel,setSel]=useState(1);
+  const [tab,setTab]=useState('port');
+  const [modal,setModal]=useState(null);
+  const day=data.itin.find(d=>d.day===sel)||data.itin[0];
+
+  function saveDay(n,u){
+    const it=data.itin.map(d=>d.day===n?{...d,...u}:d);
+    save({...data,itin:it});
+  }
+  function addItem(f,item){const d=data.itin.find(d=>d.day===sel);const arr=[...d[f],{...item,id:uid()}];saveDay(sel,{[f]:arr});}
+  function updItem(f,id,u){const d=data.itin.find(d=>d.day===sel);const arr=d[f].map(i=>i.id===id?{...i,...u}:i);saveDay(sel,{[f]:arr});}
+  function delItem(f,id){const d=data.itin.find(d=>d.day===sel);const arr=d[f].filter(i=>i.id!==id);saveDay(sel,{[f]:arr});}
+
+  const tabs=[
+    {id:'port',label:'Port'},
+    {id:'excursions',label:'Excursions'+(day.excursions.length?' ('+day.excursions.length+')':'')},
+    {id:'dining',label:'Dining'+(day.dining.length?' ('+day.dining.length+')':'')},
+    {id:'places',label:'Explorer'},
+    {id:'notes',label:'Notes'}
+  ];
+
+  return h('div',{},[
+    // Day track
+    h('div',{key:'track',style:{background:'#0E2949',overflowX:'auto',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}},
+      h('div',{style:{padding:'11px 16px 13px',display:'flex',alignItems:'center',minWidth:'max-content',gap:0,maxWidth:900,margin:'0 auto'}},
+        data.itin.map((d,i)=>{
+          const active=d.day===sel;
+          const hasData=d.excursions.length+d.dining.length+d.places.length>0;
+          return h('div',{key:d.day,style:{display:'flex',alignItems:'center'}},[
+            h('div',{onClick:()=>{setSel(d.day);setTab('port');},style:{cursor:'pointer',textAlign:'center',width:48}},[
+              h('div',{key:'c',style:{width:34,height:34,borderRadius:'50%',margin:'0 auto 3px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,transition:'all 0.2s',background:active?'#C9A45A':hasData?'rgba(201,164,90,0.22)':'rgba(255,255,255,0.07)',border:active?'2px solid #C9A45A':'2px solid rgba(255,255,255,0.15)',color:active?'#0C2340':'#fff'}},d.day),
+              h('div',{key:'p',style:{fontSize:9,color:active?'#C9A45A':'rgba(255,255,255,0.4)',whiteSpace:'nowrap',maxWidth:48,overflow:'hidden',textOverflow:'ellipsis',lineHeight:1.2}},d.isSeaDay?'Sea':d.port||'—')
+            ]),
+            i<12&&h('div',{key:'l',style:{width:12,height:1,background:'rgba(201,164,90,0.18)',flexShrink:0}})
+          ]);
+        })
+      )
+    ),
+
+    // Content
+    h('div',{key:'main',className:'main-content'},[
+      // Day header
+      h('div',{key:'dh',style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,gap:8}},[
+        h('div',{key:'dl'},[
+          h('div',{style:{fontFamily:'Georgia,serif',fontSize:18,fontWeight:700,color:'#0C2340',lineHeight:1.25}},
+            'Day '+day.day+(day.isSeaDay?' — Day at sea 🌊':day.port?' — '+day.port+(day.country?', '+day.country:''):' — Port TBD')),
+          h('div',{style:{fontSize:12,color:'#6B8099',marginTop:3}},
+            [day.date&&fmtDate(day.date),day.arrival&&'Arrives '+day.arrival,day.departure&&'Departs '+day.departure].filter(Boolean).join(' · '))
+        ]),
+        h('button',{key:'ep',className:'btn btn-ghost btn-sm',onClick:()=>setModal({t:'port'})},'✎ Edit')
+      ]),
+
+      // Warn box for Day 12
+      day.portNotes&&day.portNotes.includes('⚠️')&&h('div',{key:'warn',className:'warn-box'},
+        day.portNotes.split('\n').filter(l=>l.startsWith('⚠️')).join('\n')
+      ),
+
+      // Tabs
+      h('div',{key:'tabs',className:'tab-bar'},tabs.map(t=>h('button',{key:t.id,className:'tab-btn'+(tab===t.id?' active':''),onClick:()=>setTab(t.id)},t.label))),
+
+      // Port tab
+      tab==='port'&&h('div',{key:'pt'},
+        day.isSeaDay
+          ?h('div',{className:'card',style:{textAlign:'center',padding:28}},[h('div',{style:{fontSize:36,marginBottom:8}},'🌊'),h('div',{style:{fontFamily:'Georgia,serif',fontSize:17,color:'#0C2340',fontWeight:700}},'Day at sea'),h('div',{style:{color:'#6B8099',fontSize:13,marginTop:4}},'Relax and enjoy the ship.')])
+          :h('div',{className:'card'},[
+              h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:day.portNotes?12:0}},
+                [h('div',{key:'po'},[h('div',{className:'lbl'},'Port'),h('div',{style:{fontWeight:700,color:'#0C2340'}},day.port||'—')]),
+                 h('div',{key:'co'},[h('div',{className:'lbl'},'Country'),h('div',{style:{fontWeight:600}},day.country||'—')]),
+                 h('div',{key:'ar'},[h('div',{className:'lbl'},'Arrives'),h('div',{style:{fontWeight:600}},day.arrival||'—')]),
+                 h('div',{key:'de'},[h('div',{className:'lbl'},'Departs'),h('div',{style:{fontWeight:600}},day.departure||'—')])]
+              ),
+              day.portNotes&&h('div',{key:'pn',style:{paddingTop:12,borderTop:'1px solid #EEF3F8',fontSize:13,color:'#374151',lineHeight:1.6,whiteSpace:'pre-line'}},
+                day.portNotes.replace(/^⚠️.*$/mg,'').trim()
+              )
+            ])
+      ),
+
+      // Excursions
+      tab==='excursions'&&h('div',{key:'ext'},
+        day.excursions.length===0
+          ?h(Empty,{icon:'🗺',text:'No excursions added for this day.',onAdd:()=>setModal({t:'ex'}),addLabel:'+ Add excursion'})
+          :[...day.excursions.map(ex=>h(ICard,{key:ex.id,onEdit:()=>setModal({t:'ex',d:ex}),onDelete:()=>delItem('excursions',ex.id)},
+              [h('div',{key:'hd',className:'item-hd'},[h('div',{key:'n',className:'item-name'},ex.name),ex.status&&statusTag(ex.status)]),
+               h('div',{key:'m',className:'item-meta'},[ex.time&&h('span',{key:'t'},'🕐 '+ex.time),ex.duration&&h('span',{key:'d'},'⏱ '+ex.duration),ex.price&&h('span',{key:'p'},'💰 '+ex.price),ex.operator&&h('span',{key:'o'},'🏢 '+ex.operator)]),
+               ex.notes&&h('div',{key:'nt',className:'item-note'},ex.notes)]
+            )),
+           h('button',{key:'add',className:'btn btn-navy btn-full',style:{marginTop:4},onClick:()=>setModal({t:'ex'})},'+ Add another excursion')]
+      ),
+
+      // Dining
+      tab==='dining'&&h('div',{key:'dit'},
+        day.dining.length===0
+          ?h(Empty,{icon:'🍽',text:'No dining reservations for this day.',onAdd:()=>setModal({t:'di'}),addLabel:'+ Add reservation'})
+          :[...day.dining.map(r=>h(ICard,{key:r.id,onEdit:()=>setModal({t:'di',d:r}),onDelete:()=>delItem('dining',r.id)},
+              [h('div',{key:'hd',className:'item-hd'},[h('div',{key:'n',className:'item-name'},r.restaurant),r.type&&h('span',{key:'tp',className:'tag tag-gold'},r.type)]),
+               h('div',{key:'m',className:'item-meta'},[r.time&&h('span',{key:'t'},'🕐 '+r.time),r.guests&&h('span',{key:'g'},'👥 '+r.guests+' guests'),r.confirmation&&h('span',{key:'c'},'🔖 '+r.confirmation)]),
+               r.notes&&h('div',{key:'nt',className:'item-note'},r.notes)]
+            )),
+           h('button',{key:'add',className:'btn btn-navy btn-full',style:{marginTop:4},onClick:()=>setModal({t:'di'})},'+ Add another reservation')]
+      ),
+
+      // Places
+      tab==='places'&&h('div',{key:'plt'},
+        day.places.length===0
+          ?h(Empty,{icon:'🧭',text:'No places to explore added yet.',onAdd:()=>setModal({t:'pl'}),addLabel:'+ Add a place'})
+          :[...day.places.map(p=>h(ICard,{key:p.id,onEdit:()=>setModal({t:'pl',d:p}),onDelete:()=>delItem('places',p.id)},
+              [h('div',{key:'hd',className:'item-hd'},[h('div',{key:'n',className:'item-name'},p.name),p.category&&h('span',{key:'c',className:'tag tag-teal'},p.category)]),
+               p.description&&h('div',{key:'d',style:{fontSize:13,color:'#374151',marginTop:4,lineHeight:1.5}},p.description),
+               p.tips&&h('div',{key:'t',style:{fontSize:12,color:'#6B8099',fontStyle:'italic',borderTop:'1px solid #EEF3F8',paddingTop:7,marginTop:7}},'💡 '+p.tips)]
+            )),
+           h('button',{key:'add',className:'btn btn-navy btn-full',style:{marginTop:4},onClick:()=>setModal({t:'pl'})},'+ Add another place')]
+      ),
+
+      // Notes
+      tab==='notes'&&h('div',{key:'not',className:'card'},[
+        h('label',{key:'l',className:'lbl'},'Day notes'),
+        h('textarea',{key:'ta',value:day.notes||'',rows:12,onChange:e=>saveDay(sel,{notes:e.target.value}),placeholder:'Jot down reminders, tips, what to pack…'})
+      ])
+    ]),
+
+    // Modals
+    modal?.t==='port'&&h(PortModal,{key:'pm',day,onSave:u=>{saveDay(sel,u);setModal(null);},onClose:()=>setModal(null)}),
+    modal?.t==='ex'&&h(ExModal,{key:'em',init:modal.d,onSave:u=>{modal.d?updItem('excursions',modal.d.id,u):addItem('excursions',u);setModal(null);},onClose:()=>setModal(null)}),
+    modal?.t==='di'&&h(DiModal,{key:'dm',init:modal.d,onSave:u=>{modal.d?updItem('dining',modal.d.id,u):addItem('dining',u);setModal(null);},onClose:()=>setModal(null)}),
+    modal?.t==='pl'&&h(PlModal,{key:'plm',init:modal.d,onSave:u=>{modal.d?updItem('places',modal.d.id,u):addItem('places',u);setModal(null);},onClose:()=>setModal(null)})
+  ]);
+}
+
+// ── NOTES SCREEN ─────────────────────────────────────────────────────────────
+function NotesScreen({data,save}){
+  return h('div',{className:'main-content'},[
+    h('div',{key:'t',className:'screen-title'},'📝 Cruise Notes'),
+    h('div',{key:'hint',className:'info-box'},'Notes that apply to the whole cruise — cabin steward name, people you meet, wines to remember, future cruise offers, ship tips…'),
+    h('textarea',{key:'ta',value:data.cruiseNotes||'',rows:20,onChange:e=>save({...data,cruiseNotes:e.target.value}),placeholder:'Add anything cruise-wide here…',style:{fontSize:14,lineHeight:1.6}})
+  ]);
+}
+
+// ── EXPENSES SCREEN ───────────────────────────────────────────────────────────
+function ExpensesScreen({data,save}){
+  const [modal,setModal]=useState(null);
+  const expenses=data.expenses||[];
+
+  function addEx(item){save({...data,expenses:[...expenses,{...item,id:uid()}]});}
+  function updEx(id,u){save({...data,expenses:expenses.map(e=>e.id===id?{...e,...u}:e)});}
+  function delEx(id){save({...data,expenses:expenses.filter(e=>e.id!==id)});}
+
+  // Totals by currency
+  const totals=expenses.reduce((acc,e)=>{acc[e.currency]=(acc[e.currency]||0)+e.amount;return acc;},{});
+
+  return h('div',{className:'main-content'},[
+    h('div',{key:'hd',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},[
+      h('div',{key:'t',className:'screen-title',style:{marginBottom:0}},'💶 Expenses'),
+      h('button',{key:'add',className:'btn btn-navy btn-sm',onClick:()=>setModal({t:'add'})},'+ Add')
+    ]),
+
+    Object.keys(totals).length>0&&h('div',{key:'tot',className:'expense-total'},[
+      h('div',{style:{fontSize:11,fontWeight:700,color:'#92610A',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:6}},'Cruise total'),
+      ...Object.entries(totals).map(([c,v])=>h('div',{key:c,style:{fontSize:16,fontWeight:700,color:'#0C2340'}},currencySymbol(c)+v.toFixed(2)))
+    ]),
+
+    expenses.length===0
+      ?h(Empty,{icon:'💶',text:'No expenses logged yet.',onAdd:()=>setModal({t:'add'}),addLabel:'+ Add first expense'})
+      :h('div',{key:'list'},expenses.slice().reverse().map(e=>
+          h(ICard,{key:e.id,onEdit:()=>setModal({t:'edit',d:e}),onDelete:()=>delEx(e.id)},
+            [h('div',{key:'hd',className:'item-hd'},[
+               h('div',{key:'n',className:'item-name'},e.description||'Expense'),
+               h('div',{key:'amt',style:{fontWeight:700,color:'#B8893A',fontSize:15,flexShrink:0}},currencySymbol(e.currency)+parseFloat(e.amount||0).toFixed(2))
+             ]),
+             h('div',{key:'m',className:'item-meta'},[e.date&&h('span',{key:'d'},fmtDate(e.date)),e.port&&h('span',{key:'p'},'📍 '+e.port)])]
+          )
+        )
+      ),
+
+    modal&&h(ExpenseModal,{key:'em',init:modal.d,onSave:u=>{modal.d?updEx(modal.d.id,u):addEx(u);setModal(null);},onClose:()=>setModal(null)})
+  ]);
+}
+
+// ── EMERGENCY SCREEN ──────────────────────────────────────────────────────────
+function EmergencyScreen({data,save}){
+  const [modal,setModal]=useState(false);
+  const e=data.emergency||EMERGENCY0;
+  function row(label,value){
+    return h('div',{key:label,className:'emg-row'},[
+      h('div',{className:'emg-label'},label),
+      h('div',{className:value?'emg-value':'emg-empty'},value||'Not set — tap Edit to add')
+    ]);
+  }
+  return h('div',{className:'main-content'},[
+    h('div',{key:'hd',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},[
+      h('div',{key:'t',className:'screen-title',style:{marginBottom:0}},'🆘 Emergency Info'),
+      h('button',{key:'ed',className:'btn btn-navy btn-sm',onClick:()=>setModal(true)},'✎ Edit')
+    ]),
+    h('div',{key:'note',className:'warn-box'},'This information is available offline. Keep it up to date before departure.'),
+    h('div',{key:'cabin',className:'card'},[
+      h('div',{style:{fontSize:11,fontWeight:700,color:'#6B8099',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}},'Ship'),
+      row('Cabin number',e.cabinNumber),
+      row('Oceania Guest Services',e.oceaniaGuestServices)
+    ]),
+    h('div',{key:'ins',className:'card'},[
+      h('div',{style:{fontSize:11,fontWeight:700,color:'#6B8099',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}},'Travel insurance'),
+      row('Provider',e.insuranceProvider),
+      row('Policy number',e.insurancePolicyNumber),
+      row('Emergency phone',e.insurancePhone)
+    ]),
+    h('div',{key:'c1',className:'card'},[
+      h('div',{style:{fontSize:11,fontWeight:700,color:'#6B8099',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}},'Emergency contacts'),
+      e.contact1Name&&row(e.contact1Relation||'Contact 1',e.contact1Name+(e.contact1Phone?' · '+e.contact1Phone:'')),
+      e.contact2Name&&row(e.contact2Relation||'Contact 2',e.contact2Name+(e.contact2Phone?' · '+e.contact2Phone:'')),
+      !e.contact1Name&&!e.contact2Name&&h('div',{className:'emg-empty'},'No contacts set — tap Edit to add')
+    ]),
+    e.notes&&h('div',{key:'nt',className:'card'},[h('div',{className:'lbl'},'Notes'),h('div',{style:{fontSize:13,color:'#374151',lineHeight:1.6,whiteSpace:'pre-line'}},e.notes)]),
+    modal&&h(EmergencyModal,{key:'em',emergency:e,onSave:u=>{save({...data,emergency:u});setModal(false);},onClose:()=>setModal(false)})
+  ]);
+}
+
+// ── SETTINGS SCREEN ───────────────────────────────────────────────────────────
+function SettingsScreen({data,save,cruiseCode,onEditMeta}){
+  const [copied,setCopied]=useState(false);
+  const [importing,setImporting]=useState(false);
+  const fileRef=useRef(null);
+
+  function exportData(){
+    const json=JSON.stringify(data,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='cruise-backup-'+todayStr()+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  function handleImport(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    setImporting(true);
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const d=JSON.parse(ev.target.result);
+        if(d.itin&&d.meta){save(d);alert('Backup restored successfully.');}
+        else alert('This does not look like a valid cruise backup file.');
+      }catch{alert('Could not read the file.');}
+      setImporting(false);
+    };
+    r.readAsText(file);
+  }
+  function copyCode(){
+    navigator.clipboard.writeText(cruiseCode).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);});
+  }
+
+  return h('div',{className:'main-content'},[
+    h('div',{key:'t',className:'screen-title'},'⚙️ Settings'),
+
+    // Cruise code
+    h('div',{key:'code',className:'card'},[
+      h('div',{className:'lbl'},'Your cruise code'),
+      h('div',{className:'code-box'},cruiseCode),
+      h('div',{style:{fontSize:12,color:'#6B8099',lineHeight:1.5,marginBottom:12}},'Share this code with anyone who needs access to the planner. They open the app, choose "Join existing", and enter this code.'),
+      h('button',{className:'btn btn-gold btn-full',onClick:copyCode},copied?'✓ Copied!':'Copy cruise code')
+    ]),
+
+    // Cruise details
+    h('div',{key:'meta',className:'card'},[
+      h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},[
+        h('div',{className:'lbl',style:{marginBottom:0}},'Cruise details'),
+        h('button',{className:'btn btn-ghost btn-sm',onClick:onEditMeta},'✎ Edit')
+      ]),
+      h('div',{style:{fontSize:13,color:'#374151',lineHeight:1.8}},
+        [data.meta.voyage,data.meta.ship,data.meta.startDate&&'Departs '+fmtDate(data.meta.startDate),(data.meta.cabin?'Cabin '+data.meta.cabin:''),(data.meta.deck?'Deck '+data.meta.deck:'')].filter(Boolean).join(' · ')
+      )
+    ]),
+
+    // Export / Import
+    h('div',{key:'backup',className:'card'},[
+      h('div',{className:'lbl'},'Backup & restore'),
+      h('div',{style:{fontSize:12,color:'#6B8099',marginBottom:12,lineHeight:1.5}},'Export saves everything — itinerary, notes, expenses, emergency info — to a JSON file on your device.'),
+      h('button',{className:'btn btn-teal btn-full',style:{marginBottom:8},onClick:exportData},'⬇ Export planner backup'),
+      h('button',{className:'btn btn-ghost btn-full',style:{marginBottom:0},onClick:()=>fileRef.current.click()},importing?'Importing…':'⬆ Import planner backup'),
+      h('input',{key:'fi',type:'file',accept:'.json',ref:fileRef,style:{display:'none'},onChange:handleImport})
+    ])
+  ]);
+}
+
+// ── SETUP SCREEN ──────────────────────────────────────────────────────────────
+function SetupScreen({onSetup}){
+  const [step,setStep]=useState('choice'); // choice | new | join
+  const [configStr,setConfigStr]=useState('');
+  const [cruiseCode,setCruiseCode]=useState(genCode());
+  const [joinCode,setJoinCode]=useState('');
+  const [err,setErr]=useState('');
+  const [busy,setBusy]=useState(false);
+
+  async function connect(code){
+    setErr('');setBusy(true);
+    try{
+      const cfg=JSON.parse(configStr.trim());
+      if(!cfg.apiKey||!cfg.projectId)throw new Error('Config missing apiKey or projectId');
+      await onSetup(cfg,code.toUpperCase().trim());
+    }catch(e){setErr(e.message||'Invalid config — paste the full Firebase config object.');}
+    setBusy(false);
+  }
+
+  return h('div',{style:{minHeight:'100vh',background:'#0C2340',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px 16px'}},[
+    h('div',{key:'logo',style:{fontSize:40,marginBottom:8}},'⚓'),
+    h('div',{key:'title',style:{fontFamily:'Georgia,serif',fontSize:22,fontWeight:700,color:'#C9A45A',marginBottom:4}},'Cruise Planner'),
+    h('div',{key:'sub',style:{fontSize:13,color:'rgba(255,255,255,0.5)',marginBottom:28}},'Mediterranean 2026'),
+
+    step==='choice'&&h('div',{key:'ch',className:'setup-card'},[
+      h('div',{style:{fontSize:14,color:'#374151',lineHeight:1.6,marginBottom:20}},'First, create a free Firebase project for sync — it takes about 5 minutes and needs no credit card.',
+        h('br'),
+        h('a',{href:'https://console.firebase.google.com',target:'_blank',rel:'noopener',style:{color:'#0C2340',fontWeight:700}},' Open Firebase Console →')
+      ),
+      h('div',{className:'info-box',style:{marginBottom:16}},[
+        h('strong',{},'Setup steps:'),
+        h('ol',{style:{marginLeft:16,marginTop:6,lineHeight:2}},[
+          h('li',{},'Create a project (any name)'),
+          h('li',{},'Click "Firestore Database" → Create → Start in test mode'),
+          h('li',{},'Click ⚙️ Project settings → Your apps → Add app (Web)'),
+          h('li',{},'Copy the firebaseConfig object'),
+          h('li',{},'Paste it below')
+        ])
+      ]),
+      h('div',{className:'fld'},[
+        h('label',{className:'lbl'},'Firebase config (paste the full object)'),
+        h('textarea',{value:configStr,onChange:e=>setConfigStr(e.target.value),rows:6,placeholder:'{\n  "apiKey": "AIza...",\n  "authDomain": "...",\n  "projectId": "..."\n}'})
+      ]),
+      err&&h('div',{style:{color:'#B91C1C',fontSize:12,marginBottom:10}},err),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},[
+        h('button',{className:'btn btn-navy',onClick:()=>setStep('new')},'✨ New planner'),
+        h('button',{className:'btn btn-ghost',onClick:()=>setStep('join')},'Join existing')
+      ])
+    ]),
+
+    step==='new'&&h('div',{key:'new',className:'setup-card'},[
+      h('div',{style:{fontSize:14,color:'#374151',marginBottom:16,lineHeight:1.6}},'Your cruise code — share this with anyone who needs access:'),
+      h('div',{className:'code-box'},cruiseCode),
+      h('button',{className:'btn btn-ghost btn-sm',style:{marginBottom:16,display:'block'},onClick:()=>setCruiseCode(genCode())},'↻ Generate new code'),
+      err&&h('div',{style:{color:'#B91C1C',fontSize:12,marginBottom:10}},err),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},[
+        h('button',{className:'btn btn-ghost',onClick:()=>setStep('choice')},'← Back'),
+        h('button',{className:'btn btn-navy',onClick:()=>connect(cruiseCode),disabled:busy},busy?'Connecting…':'Create & connect')
+      ])
+    ]),
+
+    step==='join'&&h('div',{key:'join',className:'setup-card'},[
+      h('div',{className:'fld'},[
+        h('label',{className:'lbl'},'Enter cruise code'),
+        h('input',{value:joinCode,onChange:e=>setJoinCode(e.target.value.toUpperCase()),placeholder:'e.g. AB12CD',style:{fontSize:20,fontWeight:700,letterSpacing:'0.1em',textAlign:'center'}})
+      ]),
+      err&&h('div',{style:{color:'#B91C1C',fontSize:12,marginBottom:10}},err),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},[
+        h('button',{className:'btn btn-ghost',onClick:()=>setStep('choice')},'← Back'),
+        h('button',{className:'btn btn-navy',onClick:()=>connect(joinCode),disabled:busy||!joinCode},busy?'Connecting…':'Join')
+      ])
+    ])
+  ]);
+}
+
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
+function App({db,cruiseCode}){
+  const [data,setData]=useState(null);
+  const [screen,setScreen]=useState('today');
+  const [modal,setModal]=useState(null);
+  const docRef=useRef(db.collection('cruises').doc(cruiseCode));
+
+  // Real-time Firestore listener
+  useEffect(()=>{
+    return docRef.current.onSnapshot(
+      snap=>{
+        if(snap.exists){
+          setData(snap.data());
+        } else {
+          docRef.current.set(DEFAULT_DATA).catch(console.error);
+          setData(DEFAULT_DATA);
+        }
+      },
+      err=>console.error('Firestore listener error:',err)
+    );
+  },[]);
+
+  const save=useCallback(newData=>{
+    setData(newData);
+    docRef.current.set(newData).catch(e=>console.error('Save error:',e));
+  },[]);
+
+  if(!data){
+    return h('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0C2340'}},
+      h('div',{style:{color:'#C9A45A',fontFamily:'Georgia,serif',fontSize:18}},'⚓ Loading your voyage…')
+    );
+  }
+
+  const navItems=[
+    {id:'today',icon:'🌅',label:'Today'},
+    {id:'days',icon:'📅',label:'Days'},
+    {id:'notes',icon:'📝',label:'Notes'},
+    {id:'expenses',icon:'💶',label:'Expenses'},
+    {id:'emergency',icon:'🆘',label:'Emergency'}
+  ];
+
+  return h('div',{},[
+    // Header
+    h('div',{key:'hd',style:{background:'#0C2340',paddingTop:'env(safe-area-inset-top)',position:'sticky',top:0,zIndex:50}},
+      h('div',{style:{padding:'12px 16px 10px',maxWidth:900,margin:'0 auto',display:'flex',justifyContent:'space-between',alignItems:'center'}},[
+        h('div',{key:'l'},[
+          h('div',{style:{fontFamily:'Georgia,serif',fontSize:18,fontWeight:700,color:'#C9A45A',lineHeight:1.2}},
+            '⚓ '+(data.meta.voyage||'My Cruise')),
+          h('div',{style:{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:1}},
+            [data.meta.ship,data.meta.cabin&&'Cabin '+data.meta.cabin].filter(Boolean).join(' · ')||'Oceania Allura')
+        ]),
+        h('button',{key:'r',className:'btn btn-sm',onClick:()=>setScreen('settings'),style:{background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.7)',border:'1px solid rgba(255,255,255,0.15)',padding:'6px 10px'}},'⚙️')
+      ])
+    ),
+
+    // Screen content
+    screen==='today'&&h(TodayScreen,{key:'today',data,onGoToDay:(n)=>{setScreen('days');}}),
+    screen==='days'&&h(DaysScreen,{key:'days',data,save}),
+    screen==='notes'&&h(NotesScreen,{key:'notes',data,save}),
+    screen==='expenses'&&h(ExpensesScreen,{key:'exp',data,save}),
+    screen==='emergency'&&h(EmergencyScreen,{key:'emg',data,save}),
+    screen==='settings'&&h(SettingsScreen,{key:'set',data,save,cruiseCode,onEditMeta:()=>setModal({t:'meta'})}),
+
+    // Meta modal (accessible from settings)
+    modal?.t==='meta'&&h(MetaModal,{key:'mm',meta:data.meta,onSave:u=>{save({...data,meta:{...data.meta,...u}});setModal(null);},onClose:()=>setModal(null)}),
+
+    // Bottom nav
+    h('div',{key:'nav',className:'bottom-nav'},
+      navItems.map(n=>h('button',{key:n.id,className:'nav-btn'+(screen===n.id?' active':''),onClick:()=>setScreen(n.id)},
+        [h('span',{key:'i',className:'nav-icon'},n.icon),h('span',{key:'l'},n.label)]
+      ))
+    )
+  ]);
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+function SetupWrapper(){
+  async function handleSetup(cfg,code){
+    lsSet('fbConfig',cfg);
+    lsSet('cruiseCode',code);
+    await initAndRender(cfg,code);
+  }
+  return h(SetupScreen,{onSetup:handleSetup});
+}
+
+async function initAndRender(cfg,code){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    const db=firebase.firestore();
+    db.enablePersistence({synchronizeTabs:true}).catch(e=>{
+      if(e.code!=='failed-precondition'&&e.code!=='unimplemented')console.warn('Persistence:',e);
+    });
+    ReactDOM.createRoot(document.getElementById('app')).render(h(App,{db,cruiseCode:code}));
+  }catch(e){
+    console.error('Firebase init failed:',e);
+    alert('Could not connect to Firebase. Check your config and try again.\n\n'+e.message);
+    lsSet('fbConfig',null);
+    lsSet('cruiseCode',null);
+    location.reload();
+  }
+}
+
+(function boot(){
+  const cfg=lsGet('fbConfig');
+  const code=lsGet('cruiseCode');
+  if(cfg&&code){
+    initAndRender(cfg,code);
+  } else {
+    ReactDOM.createRoot(document.getElementById('app')).render(h(SetupWrapper,{}));
+  }
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW:',e));
+  });
+}
+</script>
+</body>
+</html>
